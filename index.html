@@ -229,6 +229,105 @@ body { font-family: 'Lato', sans-serif; background: var(--bg); color: var(--text
 /* ── TOAST ── */
 .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green-dark); color: white; padding: 10px 20px; border-radius: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; z-index: 300; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── CARRELLO BOTTONE ── */
+.btn-carrello {
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border);
+  background: white; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0; filter: grayscale(1); opacity: 0.4;
+}
+.btn-carrello.carrello-on {
+  background: var(--accent); border-color: var(--accent);
+  filter: grayscale(0); opacity: 1;
+}
+.btn-carrello:active { transform: scale(0.88); }
+
+/* ── EDIT BOTTONE ── */
+.btn-edit-prod {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: #f0fdf4; color: var(--green-mid); font-size: 15px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.btn-edit-prod:active { background: var(--green-pale); }
+
+/* ── RIATTIVA ── */
+.btn-riattiva {
+  padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
+  background: white; color: var(--text-muted); font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.btn-riattiva:active { background: var(--green-pale); color: var(--green-dark); }
+
+/* ── DISATTIVATO CARD ── */
+.prodotto-disattivato { opacity: 0.6; border-left: 3px solid #9ca3af; }
+
+/* ── MODAL MODIFICA ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  z-index: 200; display: flex; align-items: flex-end;
+  animation: fadeIn 0.18s ease;
+}
+.modal-sheet {
+  background: var(--card); border-radius: 20px 20px 0 0;
+  width: 100%; max-height: 92vh; overflow-y: auto;
+  padding: 0 0 24px; animation: slideUp 0.22s ease;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 20px 12px; position: sticky; top: 0;
+  background: var(--card); border-bottom: 1px solid var(--border); z-index: 1;
+}
+.modal-header h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 18px; color: var(--green-dark); }
+.btn-close-modal {
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: var(--bg); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+}
+.modal-body { padding: 16px 20px 0; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.modal-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; font-family: 'Lato', sans-serif; outline: none; background: var(--bg); }
+.modal-input:focus { border-color: var(--green-mid); background: white; }
+.modal-select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; font-family: 'Lato', sans-serif; outline: none; background: var(--bg); }
+
+/* stato selector nel modal */
+.stato-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+.stato-sel-btn {
+  flex: 1; min-width: 80px; padding: 8px 6px; border-radius: 10px;
+  border: 2px solid transparent; font-family: 'Nunito', sans-serif;
+  font-weight: 700; font-size: 12px; cursor: pointer; text-align: center;
+  transition: all 0.15s; background: var(--bg); color: var(--text-muted);
+}
+.stato-sel-btn.sel-ok     { background: #d8f3dc; color: #1b4332; border-color: #95d5b2; }
+.stato-sel-btn.sel-scarso { background: #fff3cd; color: #854d0e; border-color: #fcd34d; }
+.stato-sel-btn.sel-mancante { background: #fde8e8; color: #9b1c1c; border-color: #fca5a5; }
+
+/* toggle switches */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+.toggle-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.toggle-switch {
+  width: 46px; height: 26px; border-radius: 13px; border: none; cursor: pointer;
+  background: var(--border); position: relative; transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-switch::after {
+  content: ''; width: 20px; height: 20px; border-radius: 50%;
+  background: white; position: absolute; top: 3px; left: 3px;
+  transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch.on { background: var(--green-mid); }
+.toggle-switch.on::after { left: 23px; }
+
+/* modal footer */
+.modal-footer {
+  display: flex; gap: 10px; padding: 16px 20px 0;
+  border-top: 1px solid var(--border); margin-top: 16px;
+}
+.btn-modal-save { flex: 1; background: var(--green-main); color: white; border: none; padding: 13px; border-radius: 12px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; }
+.btn-modal-delete { width: 44px; height: 44px; border-radius: 12px; border: none; background: #fde8e8; color: var(--red); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-modal-cancel { padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--text-muted); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -301,6 +400,14 @@ let state = {
   searchQuery: '',
   syncStatus: 'ok',         // ok | pending | offline
   loginMode: 'login',       // login | register
+  // modal modifica/creazione
+  modalOpen: false,
+  modalProd: null,          // null = nuovo, altrimenti oggetto prodotto
+  modalSubcat: null,
+  // back stack: array of {view, subcat} per navigazione Android
+  navStack: [],
+  // doppio tap back per uscire dalla home
+  lastBackTime: 0,
 };
 
 // ══════════════════════════════════════════════════════
@@ -325,45 +432,48 @@ function findSubcat(id) {
 function findCatForSubcat(subcatId) {
   return CATEGORIE.find(c => c.sottocategorie.some(s => s.id === subcatId));
 }
-// stati: ok | scarso | mancante | comprare
+// 3 stati: ok | scarso | mancante  +  flag p.daComprare (bool)
 function getStato(p) {
+  if (p.stato === 'comprare') return 'mancante'; // backward compat
   if (p.stato) return p.stato;
-  // backward compat: calcola da qty
   if ((p.qty || 0) === 0) return 'mancante';
   if ((p.qty || 0) <= (p.minQty || 1)) return 'scarso';
   return 'ok';
 }
-const STATO_LABELS = { ok: '✅ OK', scarso: '⚠️ Scarso', mancante: '❌ Mancante', comprare: '🛒 Da Comprare' };
-const STATO_CYCLE  = { ok: 'scarso', scarso: 'mancante', mancante: 'comprare', comprare: 'ok' };
-const STATO_CSS    = { ok: 'stato-ok', scarso: 'stato-scarso', mancante: 'stato-mancante', comprare: 'stato-comprare' };
-const STATO_CARD   = { ok: 'stato-ok-card', scarso: 'stato-scarso-card', mancante: 'stato-mancante-card', comprare: 'stato-comprare-card' };
+const STATO_LABELS = { ok: '✅ OK', scarso: '⚠️ Scarso', mancante: '❌ Mancante' };
+const STATO_CYCLE  = { ok: 'scarso', scarso: 'mancante', mancante: 'ok' };
+const STATO_CSS    = { ok: 'stato-ok', scarso: 'stato-scarso', mancante: 'stato-mancante' };
+const STATO_CARD   = { ok: 'stato-ok-card', scarso: 'stato-scarso-card', mancante: 'stato-mancante-card' };
 
 function getAllStats() {
-  let tot = 0, ok = 0, scarso = 0, mancante = 0, comprare = 0;
+  let tot = 0, attivi = 0, ok = 0, scarso = 0, mancante = 0, daComprare = 0, disattivati = 0;
   const prods = dispensaData?.prodotti || {};
   for (const key in prods) {
     for (const p of prods[key]) {
       tot++;
+      if (p.attivo === false) { disattivati++; continue; }
+      attivi++;
+      if (p.daComprare) daComprare++;
       const s = getStato(p);
       if (s === 'ok') ok++;
       else if (s === 'scarso') scarso++;
       else if (s === 'mancante') mancante++;
-      else if (s === 'comprare') comprare++;
     }
   }
-  return { tot, ok, scarso, mancante, comprare };
+  return { tot, attivi, ok, scarso, mancante, daComprare, disattivati };
 }
 function getSubcatStats(subcatId) {
-  const prods = getProdotti(subcatId);
+  const prods = getProdotti(subcatId).filter(p => p.attivo !== false);
   const m = prods.filter(p => getStato(p) === 'mancante').length;
   const s = prods.filter(p => getStato(p) === 'scarso').length;
-  const c = prods.filter(p => getStato(p) === 'comprare').length;
-  return { tot: prods.length, mancante: m, scarso: s, comprare: c };
+  const c = prods.filter(p => p.daComprare).length;
+  return { tot: prods.length, mancante: m, scarso: s, daComprare: c };
 }
 function stockRank(p) {
+  if (p.attivo === false) return 99;
   const s = getStato(p);
   if (s === 'mancante') return 0;
-  if (s === 'comprare') return 1;
+  if (p.daComprare) return 1;
   if (s === 'scarso') return 2;
   return 3;
 }
@@ -488,12 +598,10 @@ function adjustQty(prodId, subcatId, delta) {
   const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
   if (!p) return;
   p.qty = Math.max(0, (p.qty || 0) + delta);
-  // aggiorna stato automaticamente solo se non era 'comprare'
-  if (p.stato !== 'comprare') {
-    if (p.qty === 0) p.stato = 'mancante';
-    else if (p.qty <= (p.minQty || 1)) p.stato = 'scarso';
-    else p.stato = 'ok';
-  }
+  // aggiorna stato automaticamente
+  if (p.qty === 0) p.stato = 'mancante';
+  else if (p.qty <= (p.minQty || 1)) p.stato = 'scarso';
+  else p.stato = 'ok';
   scheduleFirestoreSave();
   render();
 }
@@ -508,20 +616,86 @@ function toggleStato(prodId, subcatId) {
   render();
 }
 
-function addProdotto(nome, qty, minQty, marca, unita, note) {
-  if (!dispensaData.prodotti) dispensaData.prodotti = {};
-  if (!dispensaData.prodotti[state.currentSubcat]) dispensaData.prodotti[state.currentSubcat] = [];
-  let stato = 'ok';
-  if (qty === 0) stato = 'mancante';
-  else if (qty <= minQty) stato = 'scarso';
-  dispensaData.prodotti[state.currentSubcat].push({
-    id: Date.now() + '_' + Math.random().toString(36).slice(2),
-    nome, qty, minQty, marca, unita, note, stato
-  });
+function toggleDaComprare(prodId, subcatId) {
+  if (!dispensaData.prodotti?.[subcatId]) return;
+  const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
+  if (!p) return;
+  p.daComprare = !p.daComprare;
+  // sincronizza anche lista spesa
+  if (p.daComprare && !inLista(p.id)) {
+    const subcat = findSubcat(subcatId);
+    if (!dispensaData.lista) dispensaData.lista = [];
+    dispensaData.lista.push({
+      id: Date.now() + '_' + Math.random().toString(36).slice(2),
+      prodId: p.id, nome: p.nome,
+      qty: Math.max(1, (p.minQty||1) - (p.qty||0)),
+      unita: p.unita||'', subcatNome: subcat?.nome||'', subcatIcon: subcat?.icona||'',
+      acquistato: false,
+    });
+  } else if (!p.daComprare) {
+    dispensaData.lista = (dispensaData.lista||[]).filter(i => i.prodId !== p.id);
+  }
   scheduleFirestoreSave();
-  state.showAddForm = false;
   render();
 }
+
+function riattivaProdotto(prodId, subcatId) {
+  if (!dispensaData.prodotti?.[subcatId]) return;
+  const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
+  if (p) { p.attivo = true; scheduleFirestoreSave(); render(); }
+}
+
+// salva dal modal (nuovo o modifica)
+function saveModalProdotto(dati) {
+  const { nome, qty, minQty, nota, stato, daComprare, attivo, subcatId } = dati;
+  if (!dispensaData.prodotti) dispensaData.prodotti = {};
+  if (!dispensaData.prodotti[subcatId]) dispensaData.prodotti[subcatId] = [];
+
+  if (state.modalProd) {
+    // modifica
+    const arr = dispensaData.prodotti[state.modalProd._subcatId];
+    const idx = arr ? arr.findIndex(x => x.id === state.modalProd.id) : -1;
+    if (idx < 0) { showToast('Prodotto non trovato'); return; }
+    // se cambia subcategoria, sposta
+    if (state.modalProd._subcatId !== subcatId) {
+      arr.splice(idx, 1);
+      if (!dispensaData.prodotti[subcatId]) dispensaData.prodotti[subcatId] = [];
+      dispensaData.prodotti[subcatId].push({ ...state.modalProd, nome, qty, minQty, nota, stato, daComprare, attivo, _subcatId: subcatId });
+    } else {
+      Object.assign(arr[idx], { nome, qty, minQty, nota, stato, daComprare, attivo });
+    }
+    // aggiorna nome in lista se presente
+    (dispensaData.lista||[]).forEach(i => { if (i.prodId === state.modalProd.id) i.nome = nome; });
+  } else {
+    // nuovo
+    dispensaData.prodotti[subcatId].push({
+      id: Date.now() + '_' + Math.random().toString(36).slice(2),
+      nome, qty, minQty, nota: nota||'', stato, daComprare: daComprare||false, attivo: attivo !== false,
+    });
+  }
+  // se daComprare e non in lista, aggiungi
+  if (daComprare) {
+    const newId = state.modalProd?.id || dispensaData.prodotti[subcatId].at(-1).id;
+    if (!inLista(newId)) {
+      const subcat = findSubcat(subcatId);
+      if (!dispensaData.lista) dispensaData.lista = [];
+      dispensaData.lista.push({
+        id: Date.now() + '_' + Math.random().toString(36).slice(2),
+        prodId: newId, nome,
+        qty: Math.max(1,(minQty||1)-(qty||0)),
+        unita:'', subcatNome: subcat?.nome||'', subcatIcon: subcat?.icona||'',
+        acquistato: false,
+      });
+    }
+  }
+  scheduleFirestoreSave();
+  state.modalOpen = false;
+  state.modalProd = null;
+  state.modalSubcat = null;
+  render();
+}
+
+// addProdotto is now handled by openModal() + saveModalProdotto()
 
 function deleteProdotto(prodId, subcatId) {
   if (!dispensaData.prodotti?.[subcatId]) return;
@@ -533,30 +707,7 @@ function deleteProdotto(prodId, subcatId) {
 }
 
 function toggleLista(prod, subcatId) {
-  if (!dispensaData.lista) dispensaData.lista = [];
-  const idx = dispensaData.lista.findIndex(i => i.prodId === prod.id);
-  if (idx >= 0) {
-    dispensaData.lista.splice(idx, 1);
-  } else {
-    const subcat = findSubcat(subcatId);
-    dispensaData.lista.push({
-      id: Date.now() + '_' + Math.random().toString(36).slice(2),
-      prodId: prod.id,
-      nome: prod.nome,
-      qty: Math.max(1, (prod.minQty || 1) - (prod.qty || 0)),
-      unita: prod.unita || '',
-      subcatNome: subcat?.nome || '',
-      subcatIcon: subcat?.icona || '',
-      acquistato: false,
-    });
-    // quando si aggiunge a spesa, segna come 'comprare'
-    if (prod.stato !== 'ok') prod.stato = 'comprare';
-    scheduleFirestoreSave();
-    render();
-    return;
-  }
-  scheduleFirestoreSave();
-  render();
+  toggleDaComprare(prod.id, subcatId);
 }
 
 function addManualLista(nome) {
@@ -599,8 +750,10 @@ function autoAddEsauriti() {
   let added = 0;
   for (const key in prods) {
     for (const p of prods[key]) {
+      if (p.attivo === false) continue;
       const s = getStato(p);
-      if ((s === 'mancante' || s === 'scarso') && !inLista(p.id)) {
+      if ((s === 'mancante' || s === 'scarso') && !p.daComprare) {
+        p.daComprare = true;
         const subcat = findSubcat(key);
         if (!dispensaData.lista) dispensaData.lista = [];
         dispensaData.lista.push({
@@ -610,7 +763,6 @@ function autoAddEsauriti() {
           subcatNome: subcat?.nome || '', subcatIcon: subcat?.icona || '',
           acquistato: false,
         });
-        p.stato = 'comprare';
         added++;
       }
     }
@@ -660,12 +812,42 @@ function render() {
   if (!app) return;
   app.innerHTML = '';
 
-  if (state.view === 'loading') { renderLoading(app); return; }
-  if (state.view === 'login')   { renderLogin(app);   return; }
-  if (state.view === 'home')    { renderHome(app);    return; }
-  if (state.view === 'prodotti') { renderProdotti(app); return; }
+  if (state.view === 'loading')  { renderLoading(app);  return; }
+  if (state.view === 'login')    { renderLogin(app);    return; }
+  if (state.view === 'home')     { renderHome(app);     }
+  else if (state.view === 'prodotti') { renderProdotti(app); }
 
-  attachEvents();
+  if (state.modalOpen) renderModal(app);
+}
+
+function navigateTo(view, subcat) {
+  // push current state
+  state.navStack.push({ view: state.view, subcat: state.currentSubcat });
+  state.view = view;
+  if (subcat !== undefined) state.currentSubcat = subcat;
+  state.showAddForm = false;
+  render();
+}
+
+function navigateBack() {
+  if (state.modalOpen) { state.modalOpen = false; state.modalProd = null; render(); return; }
+  if (state.navStack.length > 0) {
+    const prev = state.navStack.pop();
+    state.view = prev.view;
+    state.currentSubcat = prev.subcat;
+    render();
+  } else {
+    // siamo alla home: doppio tap per uscire
+    const now = Date.now();
+    if (now - state.lastBackTime < 2000) {
+      // chiudi app
+      if (window.Android && Android.exitApp) Android.exitApp();
+      else history.back();
+    } else {
+      state.lastBackTime = now;
+      showToast('Premi ancora per uscire');
+    }
+  }
 }
 
 // ── LOADING ──
@@ -797,11 +979,12 @@ function renderHome(app) {
 // ── DISPENSA ──
 function renderDispensa(app, stats) {
   let html = `<div class="stats-bar">
-    <div class="stat-chip"><span class="stat-dot" style="background:#9ca3af"></span>${stats.tot} prodotti</div>`;
-  if (stats.mancante > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#e63946"></span>${stats.mancante} mancanti</div>`;
-  if (stats.comprare > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#3b82f6"></span>${stats.comprare} da comprare</div>`;
-  if (stats.scarso > 0)   html += `<div class="stat-chip"><span class="stat-dot" style="background:#f59e0b"></span>${stats.scarso} scarsi</div>`;
-  if (stats.ok > 0)       html += `<div class="stat-chip"><span class="stat-dot" style="background:#40916c"></span>${stats.ok} ok</div>`;
+    <div class="stat-chip"><span class="stat-dot" style="background:#9ca3af"></span>${stats.attivi} prodotti</div>`;
+  if (stats.mancante > 0)   html += `<div class="stat-chip"><span class="stat-dot" style="background:#e63946"></span>${stats.mancante} mancanti</div>`;
+  if (stats.daComprare > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#f77f00"></span>${stats.daComprare} da comprare</div>`;
+  if (stats.scarso > 0)     html += `<div class="stat-chip"><span class="stat-dot" style="background:#f59e0b"></span>${stats.scarso} scarsi</div>`;
+  if (stats.ok > 0)         html += `<div class="stat-chip"><span class="stat-dot" style="background:#40916c"></span>${stats.ok} ok</div>`;
+  if (stats.disattivati > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#6b7280"></span>${stats.disattivati} disattivati</div>`;
   html += `</div>`;
 
   html += `<div class="search-bar">
@@ -838,9 +1021,9 @@ function renderDispensa(app, stats) {
       for (const sub of cat.sottocategorie) {
         const sts = getSubcatStats(sub.id);
         let metaStr = sts.tot === 0 ? 'Vuoto' : `${sts.tot} prodotti`;
-        if (sts.mancante > 0) metaStr += ` · <span style="color:#e63946;font-weight:700">${sts.mancante} mancanti</span>`;
-        if (sts.comprare > 0) metaStr += ` · <span style="color:#3b82f6;font-weight:700">${sts.comprare} da comprare</span>`;
-        if (sts.scarso > 0)   metaStr += ` · <span style="color:#f59e0b;font-weight:700">${sts.scarso} scarsi</span>`;
+        if (sts.mancante > 0)   metaStr += ` · <span style="color:#e63946;font-weight:700">${sts.mancante} mancanti</span>`;
+        if (sts.daComprare > 0) metaStr += ` · <span style="color:#f77f00;font-weight:700">${sts.daComprare} da comprare</span>`;
+        if (sts.scarso > 0)     metaStr += ` · <span style="color:#f59e0b;font-weight:700">${sts.scarso} scarsi</span>`;
         catHtml += `<div class="subcat-item" data-subcat="${sub.id}">
           <span class="subcat-icon">${sub.icona}</span>
           <div class="subcat-info">
@@ -1032,9 +1215,7 @@ function renderProdotti(app) {
   const container = document.createElement('div');
   container.className = 'prodotti-container';
 
-  if (state.showAddForm) container.insertAdjacentHTML('beforeend', renderAddForm());
-
-  if (prods.length === 0 && !state.showAddForm) {
+  if (prods.length === 0) {
     container.insertAdjacentHTML('beforeend', `<div class="lista-empty" style="padding-top:30px">
       <div class="empty-icon">${subcat?.icona || '📦'}</div>
       <h3>Nessun prodotto</h3>
@@ -1055,30 +1236,41 @@ function renderProdotti(app) {
 }
 
 function renderProdottoCard(p, subcatId, showSubcat) {
-  const inLst = inLista(p.id);
+  // prodotto disattivato: mostra oscurato
+  if (p.attivo === false) {
+    return `<div class="prodotto-card prodotto-disattivato">
+      <div class="prodotto-info">
+        <div class="prodotto-nome" style="text-decoration:line-through;opacity:0.5">${p.nome}</div>
+        <div class="prodotto-details" style="opacity:0.4">disattivato</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn-riattiva" data-riattiva="${p.id}" data-subcat="${subcatId}">riattiva</button>
+        <button class="btn-edit-prod" data-edit="${p.id}" data-subcat="${subcatId}">✏️</button>
+      </div>
+    </div>`;
+  }
+
+  const inLst = p.daComprare === true;
   const stato = getStato(p);
-  const statoLabel = STATO_LABELS[stato];
-  const statoCss   = STATO_CSS[stato];
-  const cardCss    = STATO_CARD[stato];
+  const statoLabel = STATO_LABELS[stato] || '✅ OK';
+  const statoCss   = STATO_CSS[stato]   || 'stato-ok';
+  const cardCss    = STATO_CARD[stato]  || 'stato-ok-card';
   const subcat = showSubcat ? findSubcat(subcatId) : null;
   const subcatInfo = subcat ? `<span style="font-size:11px;color:var(--text-muted)">${subcat.icona} ${subcat.nome} · </span>` : '';
-  const qtyInfo = p.unita ? `Qtà: ${p.qty} ${p.unita}` : `Qtà: ${p.qty}`;
-  const dettagli = [p.marca, p.note].filter(Boolean).join(' · ');
+  const qtyTxt = p.unita ? `${p.qty} ${p.unita}` : `${p.qty}`;
+  const notaTxt = p.nota || p.note || '';
 
   return `<div class="prodotto-card ${cardCss}">
     <div class="prodotto-info">
       <div class="prodotto-nome">${p.nome}</div>
-      <div class="prodotto-details">${subcatInfo}${dettagli ? dettagli + ' · ' : ''}${qtyInfo}</div>
+      <div class="prodotto-details">${subcatInfo}${notaTxt ? notaTxt + ' · ' : ''}Qtà: ${qtyTxt}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+    <div style="display:flex;align-items:center;gap:5px">
       <button class="stato-badge ${statoCss}" data-stato="${p.id}" data-subcat="${subcatId}">${statoLabel}</button>
-      <div class="qty-controls">
-        <button class="qty-btn minus" data-dec="${p.id}" data-subcat="${subcatId}">−</button>
-        <span class="qty-num">${p.qty}</span>
-        <button class="qty-btn plus" data-inc="${p.id}" data-subcat="${subcatId}">+</button>
-      </div>
-      <button class="btn-spesa ${inLst?'in-lista':''}" data-cart="${p.id}" data-subcat="${subcatId}">🛒 ${inLst ? 'In spesa' : 'Spesa'}</button>
-      <button class="btn-delete-prod" data-delete="${p.id}" data-subcat="${subcatId}">×</button>
+      <button class="btn-carrello ${inLst?'carrello-on':''}" data-cart="${p.id}" data-subcat="${subcatId}" title="${inLst?'Rimuovi dalla spesa':'Aggiungi alla spesa'}">
+        ${inLst ? '🛒' : '🛒'}
+      </button>
+      <button class="btn-edit-prod" data-edit="${p.id}" data-subcat="${subcatId}">✏️</button>
     </div>
   </div>`;
 }
@@ -1105,6 +1297,156 @@ function renderAddForm() {
   </div>`;
 }
 
+
+// ── MODAL MODIFICA / CREAZIONE ──
+function renderModal(app) {
+  const isNew = !state.modalProd;
+  const p = state.modalProd || {};
+  const currentSubcatId = state.modalSubcat || state.currentSubcat;
+
+  // stato corrente
+  const statoVal = p.stato || 'ok';
+  const daComprareVal = p.daComprare === true;
+  const attivoVal = p.attivo !== false;
+
+  // lista sottocategorie per select
+  let subcatOptions = '';
+  for (const cat of CATEGORIE) {
+    for (const sub of cat.sottocategorie) {
+      const sel = sub.id === currentSubcatId ? 'selected' : '';
+      subcatOptions += `<option value="${sub.id}" ${sel}>${sub.icona} ${sub.nome} — ${cat.nome}</option>`;
+    }
+  }
+
+  const html = `<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-sheet" id="modalSheet">
+      <div class="modal-header">
+        <h3>${isNew ? '➕ Nuovo prodotto' : '✏️ Modifica prodotto'}</h3>
+        <button class="btn-close-modal" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="modal-field">
+          <label>Nome *</label>
+          <input class="modal-input" id="mNome" type="text" placeholder="Nome prodotto" value="${p.nome || ''}">
+        </div>
+
+        <div class="modal-field">
+          <label>Categoria</label>
+          <select class="modal-select" id="mSubcat">${subcatOptions}</select>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <div class="modal-field" style="flex:1">
+            <label>Quantità</label>
+            <input class="modal-input" id="mQty" type="number" min="0" placeholder="es. 2" value="${p.qty ?? ''}">
+          </div>
+          <div class="modal-field" style="flex:1">
+            <label>Unità</label>
+            <input class="modal-input" id="mUnita" type="text" placeholder="pz, kg, l…" value="${p.unita || ''}">
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label>Note</label>
+          <input class="modal-input" id="mNota" type="text" placeholder="Note opzionali" value="${p.nota || p.note || ''}">
+        </div>
+
+        <div class="modal-field">
+          <label>Stato scorte</label>
+          <div class="stato-selector">
+            <button class="stato-sel-btn ${statoVal==='ok'?'sel-ok':''}" data-selstato="ok">✅ OK</button>
+            <button class="stato-sel-btn ${statoVal==='scarso'?'sel-scarso':''}" data-selstato="scarso">⚠️ Scarso</button>
+            <button class="stato-sel-btn ${statoVal==='mancante'?'sel-mancante':''}" data-selstato="mancante">❌ Mancante</button>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">🛒 Da acquistare</div>
+              <div class="toggle-sub">Aggiunge alla lista della spesa</div>
+            </div>
+            <button class="toggle-switch ${daComprareVal?'on':''}" id="toggleDaComprare"></button>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">⏸️ Prodotto attivo</div>
+              <div class="toggle-sub">Se disattivato, compare oscurato</div>
+            </div>
+            <button class="toggle-switch ${attivoVal?'on':''}" id="toggleAttivo"></button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-save" id="btnModalSave">✓ Salva</button>
+        ${!isNew ? `<button class="btn-modal-delete" id="btnModalDelete">🗑</button>` : ''}
+        <button class="btn-modal-cancel" id="btnModalCancel">Annulla</button>
+      </div>
+    </div>
+  </div>`;
+
+  app.insertAdjacentHTML('beforeend', html);
+
+  // stato selector logic
+  let selectedStato = statoVal;
+  document.querySelectorAll('[data-selstato]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedStato = btn.dataset.selstato;
+      document.querySelectorAll('[data-selstato]').forEach(b => {
+        b.className = 'stato-sel-btn';
+        if (b.dataset.selstato === selectedStato) {
+          if (selectedStato === 'ok') b.classList.add('sel-ok');
+          else if (selectedStato === 'scarso') b.classList.add('sel-scarso');
+          else if (selectedStato === 'mancante') b.classList.add('sel-mancante');
+        }
+      });
+    });
+  });
+
+  // toggle da comprare
+  let isDaComprare = daComprareVal;
+  document.getElementById('toggleDaComprare')?.addEventListener('click', function() {
+    isDaComprare = !isDaComprare;
+    this.classList.toggle('on', isDaComprare);
+  });
+
+  // toggle attivo
+  let isAttivo = attivoVal;
+  document.getElementById('toggleAttivo')?.addEventListener('click', function() {
+    isAttivo = !isAttivo;
+    this.classList.toggle('on', isAttivo);
+  });
+
+  // chiudi overlay cliccando fuori
+  document.getElementById('modalOverlay')?.addEventListener('click', e => {
+    if (e.target.id === 'modalOverlay') { state.modalOpen = false; state.modalProd = null; render(); }
+  });
+  document.getElementById('btnCloseModal')?.addEventListener('click', () => { state.modalOpen = false; state.modalProd = null; render(); });
+  document.getElementById('btnModalCancel')?.addEventListener('click', () => { state.modalOpen = false; state.modalProd = null; render(); });
+
+  // salva
+  document.getElementById('btnModalSave')?.addEventListener('click', () => {
+    const nome = document.getElementById('mNome')?.value.trim();
+    if (!nome) { showToast('⚠️ Inserisci il nome'); return; }
+    const subcatId = document.getElementById('mSubcat')?.value || currentSubcatId;
+    const qty = parseInt(document.getElementById('mQty')?.value || '0') || 0;
+    const unita = document.getElementById('mUnita')?.value.trim() || '';
+    const nota = document.getElementById('mNota')?.value.trim() || '';
+    const minQty = p.minQty || 1;
+    saveModalProdotto({ nome, qty, minQty, nota, unita, stato: selectedStato, daComprare: isDaComprare, attivo: isAttivo, subcatId });
+  });
+
+  // elimina (solo modifica)
+  document.getElementById('btnModalDelete')?.addEventListener('click', () => {
+    if (confirm(`Eliminare "${p.nome}"?`)) {
+      deleteProdotto(p.id, state.modalProd._subcatId);
+      state.modalOpen = false; state.modalProd = null;
+    }
+  });
+}
+
 // ══════════════════════════════════════════════════════
 // EVENTS
 // ══════════════════════════════════════════════════════
@@ -1124,16 +1466,11 @@ function attachEvents() {
 
   // Subcat → prodotti
   document.querySelectorAll('.subcat-item[data-subcat]').forEach(el => {
-    el.addEventListener('click', () => {
-      state.currentSubcat = el.dataset.subcat;
-      state.view = 'prodotti';
-      state.showAddForm = false;
-      render();
-    });
+    el.addEventListener('click', () => navigateTo('prodotti', el.dataset.subcat));
   });
 
-  // Back
-  document.getElementById('btnBackHeader')?.addEventListener('click', () => { state.view = 'home'; render(); });
+  // Back (header)
+  document.getElementById('btnBackHeader')?.addEventListener('click', navigateBack);
 
   // Logout
   document.getElementById('btnLogout')?.addEventListener('click', () => auth.signOut());
@@ -1142,24 +1479,13 @@ function attachEvents() {
   // Auto add esauriti
   document.getElementById('btnAutoAdd')?.addEventListener('click', autoAddEsauriti);
 
-  // FAB
-  document.getElementById('fabAdd')?.addEventListener('click', () => { state.showAddForm = !state.showAddForm; render(); });
-
-  // Save prodotto
-  document.getElementById('btnSaveProd')?.addEventListener('click', () => {
-    const nome = document.getElementById('fNome')?.value.trim();
-    if (!nome) { showToast('⚠️ Inserisci il nome del prodotto'); return; }
-    addProdotto(
-      nome,
-      parseInt(document.getElementById('fQty')?.value || 0),
-      parseInt(document.getElementById('fMinQty')?.value || 1),
-      document.getElementById('fMarca')?.value.trim() || '',
-      document.getElementById('fUnita')?.value.trim() || '',
-      document.getElementById('fNote')?.value.trim() || '',
-    );
+  // FAB: nuovo prodotto
+  document.getElementById('fabAdd')?.addEventListener('click', () => {
+    state.modalOpen = true;
+    state.modalProd = null;
+    state.modalSubcat = state.currentSubcat;
+    render();
   });
-
-  document.getElementById('btnCancelForm')?.addEventListener('click', () => { state.showAddForm = false; render(); });
 
   // Qty
   document.querySelectorAll('[data-inc]').forEach(btn => {
@@ -1169,22 +1495,44 @@ function attachEvents() {
     btn.addEventListener('click', e => { e.stopPropagation(); adjustQty(btn.dataset.dec, btn.dataset.subcat, -1); });
   });
 
-  // Tap-to-cycle stato
+  // Tap-to-cycle stato (OK → Scarso → Mancante → OK)
   document.querySelectorAll('[data-stato]').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); toggleStato(btn.dataset.stato, btn.dataset.subcat); });
   });
 
-  // Spesa
-  document.querySelectorAll('[data-cart]').forEach(btn => {
+
+
+  // Edit prodotto (matita)
+  document.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const prods = getProdotti(btn.dataset.subcat);
-      const p = prods.find(x => x.id === btn.dataset.cart);
-      if (p) toggleLista(p, btn.dataset.subcat);
+      const p = prods.find(x => x.id === btn.dataset.edit);
+      if (!p) return;
+      state.modalOpen = true;
+      state.modalProd = { ...p, _subcatId: btn.dataset.subcat };
+      state.modalSubcat = btn.dataset.subcat;
+      render();
     });
   });
 
-  // Delete prodotto
+  // Carrello (da comprare toggle)
+  document.querySelectorAll('[data-cart]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleDaComprare(btn.dataset.cart, btn.dataset.subcat);
+    });
+  });
+
+  // Riattiva prodotto disattivato
+  document.querySelectorAll('[data-riattiva]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      riattivaProdotto(btn.dataset.riattiva, btn.dataset.subcat);
+    });
+  });
+
+  // Delete prodotto (dal modal)
   document.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -1247,6 +1595,16 @@ try { screen.orientation.unlock(); } catch(e) {}
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+// Android hardware back button
+document.addEventListener('backbutton', navigateBack, false);
+window.addEventListener('popstate', navigateBack);
+// Trick per intercettare back su Android WebView / TWA
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', function() {
+  history.pushState(null, '', location.href);
+  navigateBack();
+});
 
 render();
 </script>
