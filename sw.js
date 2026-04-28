@@ -1,4 +1,4 @@
-const CACHE = 'dispensa-casa-v6';
+const CACHE = 'dispensa-casa-v7';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {

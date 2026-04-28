@@ -277,6 +277,22 @@ body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--text);min-he
 .btn-add-sub{width:100%;padding:8px;border-radius:8px;border:1.5px dashed var(--border);background:white;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--text-muted);cursor:pointer;margin-top:4px;}
 .btn-add-sub:active{background:var(--green-pale);}
 
+/* EMOJI PICKER */
+.emoji-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:flex;align-items:flex-end;}
+.emoji-picker-sheet{background:white;border-radius:20px 20px 0 0;width:100%;max-height:70vh;overflow-y:auto;padding:0 0 20px;animation:slideUp 0.22s ease;}
+.emoji-picker-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;position:sticky;top:0;background:white;border-bottom:1px solid var(--border);z-index:1;}
+.emoji-picker-header h4{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:var(--green-dark);}
+.emoji-group-label{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);padding:10px 16px 4px;}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;padding:0 12px;}
+.emoji-cell{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:8px;cursor:pointer;border:none;background:none;}
+.emoji-cell:active{background:var(--green-pale);}
+/* icona prodotto nella card */
+.prodotto-icona{font-size:20px;width:28px;text-align:center;flex-shrink:0;}
+/* campo icona cliccabile */
+.icona-field{display:flex;align-items:center;gap:10px;}
+.icona-preview{width:48px;height:48px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;flex-shrink:0;}
+.icona-preview:active{background:var(--green-pale);}
+.icona-change-hint{font-size:11px;color:var(--text-muted);}
 /* TOAST */
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green-dark);color:white;padding:9px 18px;border-radius:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -327,6 +343,21 @@ const CATEGORIE_DEFAULT = [
 
 const UNITA = ['Pezzo','ml','L','kg','g','Lattina','Scatola','Pacchetto','Bottiglia'];
 const COLORI = ['#e63946','#f77f00','#2d6a4f','#2563eb','#7c3aed','#db2777','#0891b2','#65a30d','#92400e','#374151'];
+
+// Emoji picker raggruppate per tema
+const EMOJI_GROUPS = {
+  'Cibo & Cucina': ['🍎','🥦','🥕','🍅','🍋','🍇','🫐','🍓','🥝','🍈','🌽','🥑','🧅','🧄','🥔','🫛',
+    '🥩','🐟','🥚','🧀','🥛','🧈','🍞','🥖','🥐','🫓','🍝','🍚','🍜','🫙','🥫','🍯','🫒','🥜',
+    '🧂','🌿','🫚','☕','🍵','🧃','🥤','🍷','🍺','🫗','🥃'],
+  'Casa & Luoghi': ['🏠','🛋️','🛏️','🚿','🛁','🪑','🚪','🪟','🏡','🏘️','🏗️','🏢',
+    '❄️','🧊','🫙','📦','🗄️','🗃️','🗑️','🧺','🪣','🧹','🧽','🧻','🪴','🌡️','💡'],
+  'Dispensa & Mobili': ['🗄️','📦','🛒','🏪','🛍️','💼','🎒','👜','🧳','📫','🗂️','📋',
+    '🔒','🔑','🪝','🧲','📌','📍','🗺️'],
+  'Pulizia & Igiene': ['🧴','🧼','🪥','🪒','💊','🩺','🩹','🧻','🪣','🧹','🫧','🚽','🚿','🛁'],
+  'Attrezzatura': ['🔧','🪛','🔨','⚙️','🔩','🪚','🗜️','🔌','🔋','💡','📱','💻','🖥️','⌚','📷'],
+  'Animali': ['🐕','🐈','🐠','🐇','🐢','🐹','🦜','🐓','🐄','🐖','🐑'],
+  'Varie': ['⭐','❤️','✅','⚠️','❌','🔴','🟡','🟢','🔵','🟣','🟠','⬜','🏷️','🎁','🛎️','📣'],
+};
 
 const STATO_LABELS = {ok:'✅ OK',scarso:'⚠️ Scarso',mancante:'❌ Mancante'};
 const STATO_CYCLE  = {ok:'scarso',scarso:'mancante',mancante:'ok'};
@@ -468,9 +499,30 @@ function startListener(docId){
 
 async function initDispensa(user){
   let snap=await dbFs.collection('casaDispensa').where('proprietario','==',user.uid).limit(1).get();
-  if(!snap.empty){startListener(snap.docs[0].id);return;}
+  if(!snap.empty){
+    const docId=snap.docs[0].id;
+    const data=snap.docs[0].data();
+    // FIX RETROATTIVO: se mancano categorie, luoghi o negozi li inizializziamo
+    const patch={};
+    if(!data.categorie||!data.categorie.length) patch.categorie=JSON.parse(JSON.stringify(CATEGORIE_DEFAULT));
+    if(!data.luoghi) patch.luoghi=[];
+    if(!data.negozi) patch.negozi=[];
+    if(Object.keys(patch).length>0){
+      await dbFs.collection('casaDispensa').doc(docId).update(patch);
+    }
+    startListener(docId);return;
+  }
   snap=await dbFs.collection('casaDispensa').where('condivisiCon','array-contains',user.email).limit(1).get();
-  if(!snap.empty){startListener(snap.docs[0].id);return;}
+  if(!snap.empty){
+    const docId=snap.docs[0].id;
+    const data=snap.docs[0].data();
+    const patch={};
+    if(!data.categorie||!data.categorie.length) patch.categorie=JSON.parse(JSON.stringify(CATEGORIE_DEFAULT));
+    if(!data.luoghi) patch.luoghi=[];
+    if(!data.negozi) patch.negozi=[];
+    if(Object.keys(patch).length>0) await dbFs.collection('casaDispensa').doc(docId).update(patch);
+    startListener(docId);return;
+  }
   const newDoc={
     proprietario:user.uid,proprietarioEmail:user.email,condivisiCon:[],
     prodotti:{},lista:[],negozi:[],luoghi:[],
@@ -530,7 +582,7 @@ function deleteProdotto(prodId,subcatId){
 }
 
 function saveModalProdotto(dati){
-  const{nome,qty,minQty,unita,nota,stato,daComprare,attivo,subcatId,luogoId,prezziNegozi}=dati;
+  const{nome,qty,minQty,unita,nota,stato,daComprare,attivo,subcatId,luogoId,prezziNegozi,icona}=dati;
   if(!dispensaData.prodotti)dispensaData.prodotti={};
   if(!dispensaData.prodotti[subcatId])dispensaData.prodotti[subcatId]=[];
 
@@ -539,7 +591,7 @@ function saveModalProdotto(dati){
     const arr=dispensaData.prodotti[oldSub]||[];
     const idx=arr.findIndex(x=>x.id===S.modalProd.id);
     if(idx<0){showToast('Prodotto non trovato');return;}
-    const updated={...arr[idx],nome,qty,minQty,unita,nota,stato,daComprare,attivo,luogoId:luogoId||null,prezziNegozi:prezziNegozi||{}};
+    const updated={...arr[idx],nome,qty,minQty,unita,nota,stato,daComprare,attivo,luogoId:luogoId||null,prezziNegozi:prezziNegozi||{},icona:icona||arr[idx].icona||''};
     if(oldSub!==subcatId){arr.splice(idx,1);if(!dispensaData.prodotti[subcatId])dispensaData.prodotti[subcatId]=[];dispensaData.prodotti[subcatId].push(updated);}
     else arr[idx]=updated;
     (dispensaData.lista||[]).forEach(i=>{if(i.prodId===S.modalProd.id)i.nome=nome;});
@@ -547,7 +599,7 @@ function saveModalProdotto(dati){
     dispensaData.prodotti[subcatId].push({
       id:Date.now()+'_'+Math.random().toString(36).slice(2),
       nome,qty,minQty,unita,nota,stato,daComprare:false,attivo:attivo!==false,
-      luogoId:luogoId||null,prezziNegozi:prezziNegozi||{}
+      luogoId:luogoId||null,prezziNegozi:prezziNegozi||{},icona:icona||''
     });
   }
   scheduleFirestoreSave();S.modalOpen=false;S.modalProd=null;S.modalSubcat=null;render();
@@ -1057,7 +1109,9 @@ function renderProdottoCardInline(p,subcatId,showExtra){
   if(sub) tags+=`<span class="prodotto-tag tag-cat">${sub.icona} ${sub.nome}</span>`;
   if(luogo) tags+=`<span class="prodotto-tag tag-luogo">📍 ${luogo.nome}</span>`;
 
+  const iconaProd = p.icona || '';
   return`<div class="prodotto-card ${STATO_CARD[stato]||'stato-ok-card'}">
+    ${iconaProd?`<div class="prodotto-icona">${iconaProd}</div>`:''}
     <div class="prodotto-info">
       <div class="prodotto-nome">${p.nome}</div>
       <div class="prodotto-details">${p.nota?p.nota+' · ':''}Qtà: ${qtyTxt}</div>
@@ -1116,7 +1170,16 @@ function renderModalProdotto(app){
   const html=`<div class="modal-overlay" id="modalOverlay"><div class="modal-sheet">
     <div class="modal-header"><h3>${isNew?'➕ Nuovo prodotto':'✏️ Modifica prodotto'}</h3><button class="btn-close-modal" id="btnCloseModal">✕</button></div>
     <div class="modal-body">
-      <div class="modal-field"><label>Nome *</label><input class="modal-input" id="mNome" type="text" placeholder="Nome prodotto" value="${p.nome||''}"></div>
+      <div class="modal-field">
+        <label>Icona &amp; Nome</label>
+        <div class="icona-field">
+          <div class="icona-preview" id="iconaPreview">${p.icona||'📦'}</div>
+          <div style="flex:1">
+            <input class="modal-input" id="mNome" type="text" placeholder="Nome prodotto *" value="${p.nome||''}">
+            <div class="icona-change-hint">Tocca l'icona per cambiarla</div>
+          </div>
+        </div>
+      </div>
       <div class="modal-row">
         <div class="modal-field"><label>Categoria</label><select class="modal-select" id="mSubcat">${subcatOpts}</select></div>
         <div class="modal-field"><label>Luogo</label><select class="modal-select" id="mLuogo">${luogoOpts}</select></div>
@@ -1156,6 +1219,16 @@ function renderModalProdotto(app){
   document.getElementById('toggleAttivo')?.addEventListener('click',function(){isAttivo=!isAttivo;this.classList.toggle('on',isAttivo);});
 
   const doClose=()=>{S.modalOpen=false;S.modalProd=null;render();};
+  // icona picker per prodotto
+  let iconaSelezionata = p.icona||'📦';
+  document.getElementById('iconaPreview')?.addEventListener('click',()=>{
+    openEmojiPicker(iconaSelezionata, emoji=>{
+      iconaSelezionata=emoji;
+      const prev=document.getElementById('iconaPreview');
+      if(prev) prev.textContent=emoji;
+    });
+  });
+
   document.getElementById('modalOverlay')?.addEventListener('click',e=>{if(e.target.id==='modalOverlay')doClose();});
   document.getElementById('btnCloseModal')?.addEventListener('click',doClose);
   document.getElementById('btnModalCancel')?.addEventListener('click',doClose);
@@ -1170,7 +1243,7 @@ function renderModalProdotto(app){
     const nota=document.getElementById('mNota')?.value.trim()||'';
     const prezziNegozi={};
     document.querySelectorAll('[data-prezzonegs]').forEach(inp=>{const v=parseFloat(inp.value);if(v>0)prezziNegozi[inp.dataset.prezzonegs]=v;});
-    saveModalProdotto({nome,qty,minQty:p.minQty||1,unita,nota,stato:selStato,daComprare:isDaComprare,attivo:isAttivo,subcatId,luogoId:luogoId||null,prezziNegozi});
+    saveModalProdotto({nome,qty,minQty:p.minQty||1,unita,nota,stato:selStato,daComprare:isDaComprare,attivo:isAttivo,subcatId,luogoId:luogoId||null,prezziNegozi,icona:iconaSelezionata});
   });
   document.getElementById('btnModalDelete')?.addEventListener('click',()=>{if(confirm(`Eliminare "${p.nome}"?`)){deleteProdotto(p.id,S.modalProd._subcatId);S.modalOpen=false;S.modalProd=null;}});
 }
@@ -1274,8 +1347,13 @@ function renderModalLuogo(app){
   app.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modalOverlay"><div class="modal-sheet">
     <div class="modal-header"><h3>${isNew?'📍 Nuovo luogo':'✏️ Modifica luogo'}</h3><button class="btn-close-modal" id="btnCloseModal">✕</button></div>
     <div class="modal-body">
-      <div class="modal-field"><label>Nome *</label><input class="modal-input" id="lNome" type="text" placeholder="es. Frigo, Freezer, Mobile spezie…" value="${l.nome||''}"></div>
-      <div class="modal-field"><label>Icona</label><input class="modal-input" id="lIcona" type="text" placeholder="📦" value="${l.icona||''}" maxlength="2" style="font-size:22px;text-align:center;max-width:70px"></div>
+      <div class="modal-field">
+        <label>Icona &amp; Nome</label>
+        <div class="icona-field">
+          <div class="icona-preview" id="luogoIconaPreview">${l.icona||'📦'}</div>
+          <div style="flex:1"><input class="modal-input" id="lNome" type="text" placeholder="es. Frigo, Freezer, Mobile spezie…" value="${l.nome||''}"><div class="icona-change-hint">Tocca l'icona per cambiarla</div></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-modal-save" id="btnModalSave">✓ Salva</button>
@@ -1283,11 +1361,15 @@ function renderModalLuogo(app){
       <button class="btn-modal-cancel" id="btnModalCancel">Annulla</button>
     </div>
   </div></div>`);
+  let iconaLuogo=l.icona||'📦';
+  document.getElementById('luogoIconaPreview')?.addEventListener('click',()=>{
+    openEmojiPicker(iconaLuogo,emoji=>{iconaLuogo=emoji;const prev=document.getElementById('luogoIconaPreview');if(prev)prev.textContent=emoji;});
+  });
   const doClose=()=>{S.modalOpen=false;S.modalLuogo=null;render();};
   document.getElementById('modalOverlay')?.addEventListener('click',e=>{if(e.target.id==='modalOverlay')doClose();});
   document.getElementById('btnCloseModal')?.addEventListener('click',doClose);
   document.getElementById('btnModalCancel')?.addEventListener('click',doClose);
-  document.getElementById('btnModalSave')?.addEventListener('click',()=>{const nome=document.getElementById('lNome')?.value.trim();if(!nome){showToast('⚠️ Inserisci il nome');return;}saveLuogo({...l,nome,icona:document.getElementById('lIcona')?.value.trim()||'📦'});});
+  document.getElementById('btnModalSave')?.addEventListener('click',()=>{const nome=document.getElementById('lNome')?.value.trim();if(!nome){showToast('⚠️ Inserisci il nome');return;}saveLuogo({...l,nome,icona:iconaLuogo});});
   document.getElementById('btnModalDelete')?.addEventListener('click',()=>{if(confirm(`Eliminare "${l.nome}"? I prodotti rimarranno senza luogo.`))deleteLuogo(l.id);});
 }
 
@@ -1297,18 +1379,22 @@ function renderModalCategoria(app){
   const subs=(cat.sottocategorie||[{id:'sub_'+Date.now(),nome:'',icona:''}]);
 
   let subsHtml=subs.map((s,i)=>`<div class="subcat-editor-row" id="subrow_${i}">
-    <input class="modal-input emoji-input" data-subicona="${i}" placeholder="📦" value="${s.icona||''}" maxlength="2" style="font-size:18px;text-align:center;width:56px">
+    <button class="icona-preview" data-subicona-btn="${i}" style="width:40px;height:40px;font-size:20px;flex-shrink:0">${s.icona||'📦'}</button>
     <input class="modal-input" data-subnome="${i}" placeholder="Nome sottocategoria" value="${s.nome||''}" style="flex:1">
     <input type="hidden" data-subid="${i}" value="${s.id||''}">
+    <input type="hidden" data-subicona="${i}" value="${s.icona||'📦'}">
     <button class="btn-rm-sub" data-rmsub="${i}">×</button>
   </div>`).join('');
 
   app.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modalOverlay"><div class="modal-sheet">
     <div class="modal-header"><h3>${isNew?'📦 Nuova categoria':'✏️ Modifica categoria'}</h3><button class="btn-close-modal" id="btnCloseModal">✕</button></div>
     <div class="modal-body">
-      <div class="modal-row">
-        <div class="modal-field" style="max-width:70px"><label>Icona</label><input class="modal-input" id="catIcona" type="text" placeholder="📦" value="${cat.icona||''}" maxlength="2" style="font-size:22px;text-align:center;"></div>
-        <div class="modal-field" style="flex:1"><label>Nome categoria *</label><input class="modal-input" id="catNome" type="text" placeholder="es. Prodotti Freschi" value="${cat.nome||''}"></div>
+      <div class="modal-field">
+        <label>Icona &amp; Nome</label>
+        <div class="icona-field">
+          <div class="icona-preview" id="catIconaPreview">${cat.icona||'📦'}</div>
+          <div style="flex:1"><input class="modal-input" id="catNome" type="text" placeholder="Nome categoria *" value="${cat.nome||''}"><div class="icona-change-hint">Tocca l'icona per cambiarla</div></div>
+        </div>
       </div>
       <div class="modal-field"><label>Sottocategorie</label><div id="subsContainer">${subsHtml}</div>
         <button class="btn-add-sub" id="btnAddSub">+ Aggiungi sottocategoria</button>
@@ -1325,27 +1411,46 @@ function renderModalCategoria(app){
   document.getElementById('btnAddSub')?.addEventListener('click',()=>{
     const container=document.getElementById('subsContainer');const i=container.querySelectorAll('.subcat-editor-row').length;
     const row=document.createElement('div');row.className='subcat-editor-row';row.id=`subrow_${i}`;
-    row.innerHTML=`<input class="modal-input emoji-input" data-subicona="${i}" placeholder="📦" maxlength="2" style="font-size:18px;text-align:center;width:56px"><input class="modal-input" data-subnome="${i}" placeholder="Nome sottocategoria" style="flex:1"><input type="hidden" data-subid="${i}" value=""><button class="btn-rm-sub" data-rmsub="${i}">×</button>`;
+    row.innerHTML=`<button class="icona-preview" data-subicona-btn="${i}" style="width:40px;height:40px;font-size:20px;flex-shrink:0">📦</button><input class="modal-input" data-subnome="${i}" placeholder="Nome sottocategoria" style="flex:1"><input type="hidden" data-subid="${i}" value=""><input type="hidden" data-subicona="${i}" value="📦"><button class="btn-rm-sub" data-rmsub="${i}">×</button>`;
     container.appendChild(row);
     row.querySelector(`[data-rmsub]`)?.addEventListener('click',()=>row.remove());
+    // picker per nuova riga
+    row.querySelector('[data-subicona-btn]')?.addEventListener('click',function(){
+      const hiddenInput=this.closest('.subcat-editor-row').querySelector('[data-subicona]');
+      openEmojiPicker(this.textContent.trim(),emoji=>{this.textContent=emoji;if(hiddenInput)hiddenInput.value=emoji;});
+    });
   });
 
   // rimozione sottocategorie esistenti
   document.querySelectorAll('[data-rmsub]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('.subcat-editor-row')?.remove()));
+  // picker per icone sottocategorie esistenti
+  document.querySelectorAll('[data-subicona-btn]').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      const hiddenInput=this.closest('.subcat-editor-row').querySelector('[data-subicona]');
+      const current=hiddenInput?hiddenInput.value:'📦';
+      openEmojiPicker(current,emoji=>{this.textContent=emoji;if(hiddenInput)hiddenInput.value=emoji;});
+    });
+  });
 
   const doClose=()=>{S.modalOpen=false;S.modalCat=null;render();};
   document.getElementById('modalOverlay')?.addEventListener('click',e=>{if(e.target.id==='modalOverlay')doClose();});
   document.getElementById('btnCloseModal')?.addEventListener('click',doClose);
   document.getElementById('btnModalCancel')?.addEventListener('click',doClose);
 
+  // picker icona categoria
+  let iconaCat=cat.icona||'📦';
+  document.getElementById('catIconaPreview')?.addEventListener('click',()=>{
+    openEmojiPicker(iconaCat,emoji=>{iconaCat=emoji;const prev=document.getElementById('catIconaPreview');if(prev)prev.textContent=emoji;});
+  });
+
   document.getElementById('btnModalSave')?.addEventListener('click',()=>{
     const nome=document.getElementById('catNome')?.value.trim();if(!nome){showToast('⚠️ Inserisci il nome');return;}
-    const icona=document.getElementById('catIcona')?.value.trim()||'📦';
+    const icona=iconaCat;
     const rows=document.querySelectorAll('.subcat-editor-row');
     const sottocategorie=[];
     rows.forEach(row=>{
       const nomeS=row.querySelector('[data-subnome]')?.value.trim();
-      const iconaS=row.querySelector('[data-subicona]')?.value.trim()||'📦';
+      const iconaS=row.querySelector('[data-subicona]')?.value||'📦';
       const idS=row.querySelector('[data-subid]')?.value||('sub_'+Date.now()+'_'+Math.random().toString(36).slice(2));
       if(nomeS) sottocategorie.push({id:idS,nome:nomeS,icona:iconaS});
     });
@@ -1353,6 +1458,47 @@ function renderModalCategoria(app){
     saveCategoria({...cat,nome,icona,sottocategorie});
   });
   document.getElementById('btnModalDelete')?.addEventListener('click',()=>{if(confirm(`Eliminare "${cat.nome}"? I prodotti rimarranno senza categoria.`))deleteCategoria(cat.id);});
+}
+
+// ═══════════════════════════════════════════════
+// EMOJI PICKER
+// ═══════════════════════════════════════════════
+function openEmojiPicker(currentEmoji, onSelect) {
+  // rimuovi picker esistente
+  document.getElementById('emojiPickerOverlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'emoji-picker-overlay';
+  overlay.id = 'emojiPickerOverlay';
+
+  let html = `<div class="emoji-picker-sheet">
+    <div class="emoji-picker-header">
+      <h4>Scegli un'icona</h4>
+      <button id="btnCloseEmojiPicker" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">✕</button>
+    </div>`;
+
+  for(const [gruppo, emojis] of Object.entries(EMOJI_GROUPS)){
+    html += `<div class="emoji-group-label">${gruppo}</div><div class="emoji-grid">`;
+    emojis.forEach(e=>{
+      html += `<button class="emoji-cell ${e===currentEmoji?'':''}" data-emoji="${e}" style="${e===currentEmoji?'background:var(--green-pale);outline:2px solid var(--green-mid)':''}">${e}</button>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+
+  // eventi
+  overlay.addEventListener('click', e=>{
+    if(e.target === overlay){ overlay.remove(); }
+  });
+  document.getElementById('btnCloseEmojiPicker')?.addEventListener('click', ()=>overlay.remove());
+  overlay.querySelectorAll('[data-emoji]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      onSelect(btn.dataset.emoji);
+      overlay.remove();
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════
