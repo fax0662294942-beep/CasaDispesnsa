@@ -2,43 +2,1200 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CasaDispensa</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2d6a4f">
+<title>Dispensa Casa</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#e76f51">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/style.css">
+<!-- Firebase CDN compat v10.12.0 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --green-dark: #1b4332;
+  --green-main: #2d6a4f;
+  --green-mid: #40916c;
+  --green-light: #74c69d;
+  --green-pale: #d8f3dc;
+  --accent: #f77f00;
+  --accent-light: #ffd166;
+  --red: #e63946;
+  --blue: #2563eb;
+  --bg: #f8fdf9;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --border: #e0f0e8;
+  --shadow: 0 2px 12px rgba(45,106,79,0.12);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Lato', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* ── LOGIN SCREEN ── */
+.login-screen {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px;
+  background: linear-gradient(160deg, var(--green-dark) 0%, var(--green-mid) 100%);
+}
+.login-logo { font-size: 64px; margin-bottom: 12px; }
+.login-title { font-family: 'Nunito', sans-serif; font-size: 28px; font-weight: 800; color: white; text-align: center; }
+.login-sub { font-size: 14px; color: rgba(255,255,255,0.7); margin: 6px 0 32px; text-align: center; }
+.login-card { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,0.2); }
+.login-card h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; color: var(--green-dark); margin-bottom: 16px; }
+.login-input { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; font-family: 'Lato', sans-serif; margin-bottom: 10px; outline: none; transition: border-color 0.2s; }
+.login-input:focus { border-color: var(--green-mid); }
+.btn-login-email { width: 100%; padding: 12px; background: var(--green-main); color: white; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; margin-bottom: 10px; }
+.btn-login-google { width: 100%; padding: 12px; background: white; color: var(--text); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-login-google img { width: 18px; height: 18px; }
+.login-divider { text-align: center; font-size: 12px; color: var(--text-muted); margin: 10px 0; }
+.login-toggle { text-align: center; font-size: 13px; color: var(--green-mid); cursor: pointer; margin-top: 12px; font-weight: 600; }
+.login-error { background: #fde8e8; color: var(--red); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 10px; display: none; }
+
+/* ── LOADING ── */
+.loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; background: var(--bg); }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--green-main); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--text-muted); }
+
+/* ── HEADER ── */
+.app-header {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-main) 100%);
+  color: white; padding: 0;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(27,67,50,0.3);
+}
+.header-main { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.header-title { display: flex; align-items: center; gap: 10px; }
+.header-title .icon { font-size: 24px; }
+.header-title h1 { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.1; }
+.header-title h1 span { font-size: 12px; font-weight: 400; opacity: 0.8; display: block; }
+.header-actions { display: flex; gap: 8px; }
+.btn-icon { background: rgba(255,255,255,0.15); border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; cursor: pointer; transition: background 0.2s; }
+.btn-icon:active { background: rgba(255,255,255,0.3); }
+
+/* sync indicator */
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.sync-ok { background: var(--green-light); }
+.sync-pending { background: var(--accent-light); animation: pulse 1s ease-in-out infinite; }
+.sync-offline { background: #9ca3af; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── TABS ── */
+.tabs { display: flex; background: rgba(0,0,0,0.15); }
+.tab { flex: 1; padding: 10px 4px; text-align: center; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); cursor: pointer; border: none; background: none; transition: all 0.2s; letter-spacing: 0.3px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.tab.active { color: white; background: rgba(255,255,255,0.15); border-bottom: 3px solid var(--accent-light); }
+.tab .tab-icon { font-size: 16px; }
+.badge { background: var(--accent); color: white; border-radius: 10px; padding: 1px 6px; font-size: 10px; font-weight: 800; min-width: 18px; display: inline-block; text-align: center; }
+
+/* ── SEARCH ── */
+.search-bar { padding: 12px 16px; background: white; border-bottom: 1px solid var(--border); }
+.search-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: 8px 12px; transition: border-color 0.2s; }
+.search-input-wrap:focus-within { border-color: var(--green-mid); }
+.search-input-wrap input { flex: 1; border: none; background: none; font-size: 14px; color: var(--text); outline: none; font-family: 'Lato', sans-serif; }
+.search-input-wrap .search-icon { color: var(--text-muted); font-size: 16px; }
+
+/* ── MAIN ── */
+.main-content { padding: 0 0 80px; }
+
+/* ── STATS BAR ── */
+.stats-bar { display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto; scrollbar-width: none; }
+.stats-bar::-webkit-scrollbar { display: none; }
+.stat-chip { flex-shrink: 0; background: white; border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; font-size: 12px; font-family: 'Nunito', sans-serif; font-weight: 700; }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ── CATEGORY CARDS ── */
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 8px; }
+.section-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--green-dark); }
+.category-card { margin: 0 16px 12px; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+.category-header { display: flex; align-items: center; padding: 14px 16px; cursor: pointer; gap: 12px; transition: background 0.15s; }
+.category-header:active { background: var(--green-pale); }
+.cat-icon { font-size: 26px; width: 40px; text-align: center; }
+.cat-info { flex: 1; }
+.cat-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; color: var(--green-dark); }
+.cat-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.cat-chevron { color: var(--text-muted); font-size: 18px; transition: transform 0.25s; }
+.cat-chevron.open { transform: rotate(90deg); }
+
+/* ── SUBCATEGORIES ── */
+.subcategory-list { border-top: 1px solid var(--border); }
+.subcat-item { display: flex; align-items: center; padding: 12px 16px 12px 24px; cursor: pointer; gap: 10px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.subcat-item:last-child { border-bottom: none; }
+.subcat-item:active { background: var(--green-pale); }
+.subcat-icon { font-size: 20px; width: 30px; text-align: center; }
+.subcat-info { flex: 1; }
+.subcat-name { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+.subcat-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.subcat-chevron { color: var(--text-muted); font-size: 16px; }
+
+/* ── PRODOTTI VIEW ── */
+.prodotti-container { padding: 12px 16px 80px; }
+.prodotto-card { background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(45,106,79,0.06); }
+.prodotto-info { flex: 1; min-width: 0; }
+.prodotto-nome { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prodotto-details { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.stock-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; font-family: 'Nunito', sans-serif; }
+.stock-ok { background: #d8f3dc; color: var(--green-dark); }
+.stock-low { background: #fff3cd; color: #856404; }
+.stock-out { background: #fde8e8; color: var(--red); }
+.qty-controls { display: flex; align-items: center; gap: 6px; }
+.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.qty-btn.minus { background: #fde8e8; color: var(--red); }
+.qty-btn.plus { background: var(--green-pale); color: var(--green-dark); }
+.qty-btn:active { transform: scale(0.9); }
+.qty-num { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 16px; min-width: 24px; text-align: center; }
+.btn-cart { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--accent-light); color: var(--green-dark); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.btn-cart.in-cart { background: var(--accent); color: white; }
+.btn-cart:active { transform: scale(0.9); }
+.btn-delete-prod { width: 28px; height: 28px; border-radius: 50%; border: none; background: #fde8e8; color: var(--red); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ── ADD FORM ── */
+.add-prodotto-form { background: var(--green-pale); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; border: 1px dashed var(--green-mid); }
+.add-prodotto-form h4 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; color: var(--green-dark); margin-bottom: 10px; }
+.form-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.form-input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; font-family: 'Lato', sans-serif; background: white; outline: none; min-width: 100px; }
+.form-input:focus { border-color: var(--green-mid); }
+.btn-save { background: var(--green-main); color: white; border: none; padding: 9px 18px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
+.btn-cancel-form { background: white; color: var(--text-muted); border: 1px solid var(--border); padding: 9px 14px; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
+
+/* ── FAB ── */
+.fab { position: fixed; bottom: 80px; right: 16px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--green-mid), var(--green-dark)); color: white; font-size: 26px; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(45,106,79,0.4); display: flex; align-items: center; justify-content: center; z-index: 90; transition: transform 0.2s; }
+.fab:active { transform: scale(0.93); }
+
+/* ── LISTA SPESA ── */
+.lista-section { padding: 12px 16px 80px; }
+.lista-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+.lista-empty .empty-icon { font-size: 56px; margin-bottom: 12px; }
+.lista-empty h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 6px; color: var(--text); }
+.lista-empty p { font-size: 13px; line-height: 1.5; }
+.lista-item { background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 4px rgba(45,106,79,0.06); }
+.lista-item.acquistato { opacity: 0.5; }
+.lista-item.acquistato .lista-nome { text-decoration: line-through; }
+.check-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--green-mid); background: none; cursor: pointer; flex-shrink: 0; transition: all 0.15s; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.check-btn.checked { background: var(--green-mid); border-color: var(--green-mid); color: white; }
+.lista-info { flex: 1; }
+.lista-nome { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+.lista-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.lista-qty { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px; color: var(--green-dark); }
+.lista-actions { display: flex; gap: 8px; padding: 0 0 12px; }
+.btn-lista-action { flex: 1; padding: 10px; border-radius: 8px; border: none; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+.btn-clear-done { background: #fde8e8; color: var(--red); }
+.btn-clear-all { background: var(--border); color: var(--text-muted); }
+.add-manual-form { background: white; border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px; margin-bottom: 12px; }
+.add-manual-form .form-row { margin-bottom: 0; }
+
+/* ── IMPOSTAZIONI ── */
+.settings-section { padding: 16px 16px 80px; }
+.settings-card { background: white; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow); }
+.settings-card-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.settings-card-header h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; color: var(--green-dark); }
+.settings-card-header p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.settings-item { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.settings-item:last-child { border-bottom: none; }
+.settings-item-icon { font-size: 22px; width: 36px; text-align: center; }
+.settings-item-info { flex: 1; }
+.settings-item-label { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; }
+.settings-item-value { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.btn-settings { padding: 8px 14px; border-radius: 8px; border: none; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; }
+.btn-danger { background: #fde8e8; color: var(--red); }
+.btn-primary { background: var(--green-pale); color: var(--green-dark); }
+.btn-blue { background: #dbeafe; color: var(--blue); }
+.shared-user-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--green-pale); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 12px; font-family: 'Nunito', sans-serif; font-weight: 600; margin: 4px; }
+.shared-user-chip button { background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; animation: fadeIn 0.2s; }
+.modal { background: white; border-radius: 20px 20px 0 0; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px; animation: slideUp 0.25s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.modal h3 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 14px; color: var(--green-dark); }
+.modal-form-group { margin-bottom: 12px; }
+.modal-form-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.modal-input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 14px; font-family: 'Lato', sans-serif; outline: none; transition: border-color 0.2s; }
+.modal-input:focus { border-color: var(--green-mid); }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn-modal-save { flex: 1; background: var(--green-main); color: white; border: none; padding: 12px; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; }
+.btn-modal-cancel { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); padding: 12px 16px; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
+.modal-error { background: #fde8e8; color: var(--red); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 10px; display: none; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green-dark); color: white; padding: 10px 20px; border-radius: 20px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; z-index: 300; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
 </head>
-
 <body>
-
-<header>
-<h1>CasaDispensa</h1>
-</header>
-
-<div id="app">
-<h2>Inventario</h2>
-<p>Benvenuto in CasaDispensa.</p>
-</div>
-
-<nav class="bottom-nav">
-<button onclick="showTab('inventario')">Inventario</button>
-<button onclick="showTab('spesa')">Lista Spesa</button>
-<button onclick="showTab('esaurimento')">Esaurimento</button>
-<button onclick="showTab('negozi')">Negozi</button>
-<button onclick="showTab('impostazioni')">Impostazioni</button>
-</nav>
-
-<script src="js/app.js"></script>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
 
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
-}
-</script>
+// ══════════════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════════════
+firebase.initializeApp({
+  apiKey: "AIzaSyDue3aMzi-8-zflMvlgdGp1TzzId1CZNaI",
+  authDomain: "viaggi-camper.firebaseapp.com",
+  projectId: "viaggi-camper",
+  storageBucket: "viaggi-camper.firebasestorage.app",
+  messagingSenderId: "172431561795",
+  appId: "1:172431561795:web:ae6ef3e9c2bbdfeb2d70f6"
+});
+const auth = firebase.auth();
+const db   = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
+// ══════════════════════════════════════════════════════
+// STRUTTURA CATEGORIE
+// ══════════════════════════════════════════════════════
+const CATEGORIE = [
+  {
+    id: 'freschi', nome: 'Prodotti Freschi', icona: '🛒',
+    sottocategorie: [
+      { id: 'ortofrutta',  nome: 'Ortofrutta',             icona: '🥦', desc: 'Frutta e verdura fresca' },
+      { id: 'macelleria',  nome: 'Macelleria',              icona: '🥩', desc: 'Carne fresca e confezionata' },
+      { id: 'pescheria',   nome: 'Pescheria',               icona: '🐟', desc: 'Pesce, crostacei, sushi' },
+      { id: 'gastronomia', nome: 'Gastronomia/Salumeria',   icona: '🧀', desc: 'Affettati, formaggi, piatti pronti' },
+      { id: 'panetteria',  nome: 'Panetteria/Forno',        icona: '🥖', desc: 'Pane, focacce, dolci, pasticceria' },
+    ]
+  },
+  {
+    id: 'confezionati', nome: 'Prodotti Confezionati', icona: '📦',
+    sottocategorie: [
+      { id: 'latticini',   nome: 'Latticini e Uova',         icona: '🥛', desc: 'Yogurt, latte, burro, formaggi' },
+      { id: 'surgelati',   nome: 'Surgelati',                 icona: '❄️', desc: 'Pesce, verdure, pizze congelate' },
+      { id: 'alimentari',  nome: 'Alimentari Confezionati',   icona: '🍝', desc: 'Pasta, riso, conserve, olio, snack' },
+    ]
+  },
+  {
+    id: 'non_alimentari', nome: 'Non Alimentari', icona: '🧴',
+    sottocategorie: [
+      { id: 'igiene',   nome: 'Igiene e Cura Persona',    icona: '🧼', desc: 'Detergenti, saponi, cosmetici' },
+      { id: 'pulizia',  nome: 'Pulizia Casa',              icona: '🧹', desc: 'Detersivi, bucato, piatti' },
+      { id: 'petfood',  nome: 'Pet Food',                  icona: '🐾', desc: 'Cibo per animali domestici' },
+      { id: 'bazar',    nome: 'Bazar/Articoli Regalo',     icona: '🛍️', desc: 'Casalinghi, lampadine, cancelleria' },
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════
+// STATO APPLICAZIONE
+// ══════════════════════════════════════════════════════
+let currentUser   = null;
+let dispensaDocId = null;   // docId Firestore corrente (proprio o condiviso)
+let dispensaData  = null;   // { prodotti: {subcatId: [...]} , lista: [...], condivisiCon: [...], proprietario: uid }
+let unsubscribe   = null;   // listener Firestore
+
+let state = {
+  view: 'loading',          // loading | login | home | prodotti
+  activeTab: 'dispensa',    // dispensa | lista | impostazioni
+  catOpenMap: {},
+  currentSubcat: null,
+  showAddForm: false,
+  searchQuery: '',
+  syncStatus: 'ok',         // ok | pending | offline
+  loginMode: 'login',       // login | register
+};
+
+// ══════════════════════════════════════════════════════
+// HELPERS DATI
+// ══════════════════════════════════════════════════════
+function getProdotti(subcatId) {
+  return (dispensaData?.prodotti?.[subcatId]) || [];
+}
+function getLista() {
+  return dispensaData?.lista || [];
+}
+function inLista(prodId) {
+  return getLista().some(i => i.prodId === prodId);
+}
+function findSubcat(id) {
+  for (const cat of CATEGORIE) {
+    const s = cat.sottocategorie.find(s => s.id === id);
+    if (s) return s;
+  }
+  return null;
+}
+function findCatForSubcat(subcatId) {
+  return CATEGORIE.find(c => c.sottocategorie.some(s => s.id === subcatId));
+}
+function getAllStats() {
+  let tot = 0, ok = 0, low = 0, out = 0;
+  const prods = dispensaData?.prodotti || {};
+  for (const key in prods) {
+    for (const p of prods[key]) {
+      tot++;
+      if (p.qty === 0) out++;
+      else if (p.qty <= p.minQty) low++;
+      else ok++;
+    }
+  }
+  return { tot, ok, low, out };
+}
+function getSubcatStats(subcatId) {
+  const prods = getProdotti(subcatId);
+  return {
+    tot: prods.length,
+    low: prods.filter(p => p.qty > 0 && p.qty <= p.minQty).length,
+    out: prods.filter(p => p.qty === 0).length,
+  };
+}
+function stockRank(p) {
+  if (p.qty === 0) return 0;
+  if (p.qty <= p.minQty) return 1;
+  return 2;
+}
+
+// ══════════════════════════════════════════════════════
+// FIRESTORE — SALVATAGGIO
+// ══════════════════════════════════════════════════════
+let saveTimer = null;
+function scheduleFirestoreSave() {
+  state.syncStatus = 'pending';
+  renderSyncDot();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doFirestoreSave, 800);
+}
+
+async function doFirestoreSave() {
+  if (!dispensaDocId || !dispensaData) return;
+  try {
+    await db.collection('casaDispensa').doc(dispensaDocId).set(dispensaData);
+    state.syncStatus = 'ok';
+  } catch (e) {
+    console.warn('Firestore save error', e);
+    state.syncStatus = 'offline';
+  }
+  renderSyncDot();
+}
+
+function renderSyncDot() {
+  const dot = document.getElementById('syncDot');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + (state.syncStatus === 'ok' ? 'sync-ok' : state.syncStatus === 'pending' ? 'sync-pending' : 'sync-offline');
+}
+
+// ══════════════════════════════════════════════════════
+// FIRESTORE — LISTENER REALTIME
+// ══════════════════════════════════════════════════════
+function startListener(docId) {
+  if (unsubscribe) unsubscribe();
+  dispensaDocId = docId;
+  unsubscribe = db.collection('casaDispensa').doc(docId)
+    .onSnapshot(snap => {
+      if (snap.exists) {
+        dispensaData = snap.data();
+      }
+      if (state.view !== 'login' && state.view !== 'loading') {
+        render();
+      }
+    }, err => {
+      console.warn('Listener error', err);
+      state.syncStatus = 'offline';
+      renderSyncDot();
+    });
+}
+
+// ══════════════════════════════════════════════════════
+// INIT DISPENSA su Firestore (primo accesso)
+// ══════════════════════════════════════════════════════
+async function initDispensa(user) {
+  // Cerca documento di proprietà
+  const snap = await db.collection('casaDispensa')
+    .where('proprietario', '==', user.uid)
+    .limit(1).get();
+
+  if (!snap.empty) {
+    startListener(snap.docs[0].id);
+    return;
+  }
+
+  // Cerca documento condiviso con questo utente
+  const snapShared = await db.collection('casaDispensa')
+    .where('condivisiCon', 'array-contains', user.email)
+    .limit(1).get();
+
+  if (!snapShared.empty) {
+    startListener(snapShared.docs[0].id);
+    return;
+  }
+
+  // Crea nuovo documento
+  const newDoc = {
+    proprietario: user.uid,
+    proprietarioEmail: user.email,
+    condivisiCon: [],
+    prodotti: {},
+    lista: [],
+    creatoIl: new Date().toISOString(),
+  };
+  const ref = await db.collection('casaDispensa').add(newDoc);
+  dispensaData = newDoc;
+  startListener(ref.id);
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  if (user) {
+    state.view = 'loading';
+    render();
+    try {
+      await initDispensa(user);
+      state.view = 'home';
+    } catch (e) {
+      console.error('initDispensa error', e);
+      state.view = 'home';
+    }
+  } else {
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    dispensaData = null;
+    dispensaDocId = null;
+    state.view = 'login';
+  }
+  render();
+});
+
+// ══════════════════════════════════════════════════════
+// OPERAZIONI SUI DATI
+// ══════════════════════════════════════════════════════
+function adjustQty(prodId, subcatId, delta) {
+  if (!dispensaData.prodotti[subcatId]) return;
+  const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
+  if (!p) return;
+  p.qty = Math.max(0, (p.qty || 0) + delta);
+  scheduleFirestoreSave();
+  render();
+}
+
+function addProdotto(nome, qty, minQty, marca, unita, note) {
+  if (!dispensaData.prodotti) dispensaData.prodotti = {};
+  if (!dispensaData.prodotti[state.currentSubcat]) dispensaData.prodotti[state.currentSubcat] = [];
+  dispensaData.prodotti[state.currentSubcat].push({
+    id: Date.now() + '_' + Math.random().toString(36).slice(2),
+    nome, qty, minQty, marca, unita, note
+  });
+  scheduleFirestoreSave();
+  state.showAddForm = false;
+  render();
+}
+
+function deleteProdotto(prodId, subcatId) {
+  if (!dispensaData.prodotti?.[subcatId]) return;
+  dispensaData.prodotti[subcatId] = dispensaData.prodotti[subcatId].filter(p => p.id !== prodId);
+  // rimuovi anche dalla lista
+  dispensaData.lista = (dispensaData.lista || []).filter(i => i.prodId !== prodId);
+  scheduleFirestoreSave();
+  render();
+}
+
+function toggleLista(prod, subcatId) {
+  if (!dispensaData.lista) dispensaData.lista = [];
+  const idx = dispensaData.lista.findIndex(i => i.prodId === prod.id);
+  if (idx >= 0) {
+    dispensaData.lista.splice(idx, 1);
+  } else {
+    const subcat = findSubcat(subcatId);
+    dispensaData.lista.push({
+      id: Date.now() + '_' + Math.random().toString(36).slice(2),
+      prodId: prod.id,
+      nome: prod.nome,
+      qty: Math.max(1, (prod.minQty || 1) - (prod.qty || 0)),
+      unita: prod.unita || '',
+      subcatNome: subcat?.nome || '',
+      subcatIcon: subcat?.icona || '',
+      acquistato: false,
+    });
+  }
+  scheduleFirestoreSave();
+  render();
+}
+
+function addManualLista(nome) {
+  if (!dispensaData.lista) dispensaData.lista = [];
+  dispensaData.lista.push({
+    id: Date.now() + '_' + Math.random().toString(36).slice(2),
+    prodId: null, nome, qty: 1, unita: '',
+    subcatNome: '', subcatIcon: '', acquistato: false,
+  });
+  scheduleFirestoreSave();
+  render();
+}
+
+function toggleAcquistato(itemId) {
+  const item = (dispensaData.lista || []).find(i => String(i.id) === String(itemId));
+  if (item) { item.acquistato = !item.acquistato; scheduleFirestoreSave(); render(); }
+}
+
+function deleteListaItem(itemId) {
+  dispensaData.lista = (dispensaData.lista || []).filter(i => String(i.id) !== String(itemId));
+  scheduleFirestoreSave();
+  render();
+}
+
+function clearAcquistati() {
+  dispensaData.lista = (dispensaData.lista || []).filter(i => !i.acquistato);
+  scheduleFirestoreSave();
+  render();
+}
+
+function clearAllLista() {
+  dispensaData.lista = [];
+  scheduleFirestoreSave();
+  render();
+}
+
+function autoAddEsauriti() {
+  if (!dispensaData) return;
+  const prods = dispensaData.prodotti || {};
+  let added = 0;
+  for (const key in prods) {
+    for (const p of prods[key]) {
+      if (p.qty === 0 && !inLista(p.id)) {
+        const subcat = findSubcat(key);
+        if (!dispensaData.lista) dispensaData.lista = [];
+        dispensaData.lista.push({
+          id: Date.now() + '_' + Math.random().toString(36).slice(2) + added,
+          prodId: p.id, nome: p.nome,
+          qty: p.minQty || 1, unita: p.unita || '',
+          subcatNome: subcat?.nome || '', subcatIcon: subcat?.icona || '',
+          acquistato: false,
+        });
+        added++;
+      }
+    }
+  }
+  if (added > 0) { scheduleFirestoreSave(); showToast(`✅ ${added} prodotti aggiunti alla lista!`); render(); }
+  else showToast('Nessun prodotto esaurito da aggiungere');
+}
+
+async function addCondivisioneEmail(email) {
+  if (!dispensaData || !dispensaDocId) return;
+  email = email.trim().toLowerCase();
+  if (!email || !email.includes('@')) { showToast('Email non valida'); return; }
+  if (email === currentUser.email) { showToast('Non puoi condividere con te stesso'); return; }
+  if ((dispensaData.condivisiCon || []).includes(email)) { showToast('Email già presente'); return; }
+  if (!dispensaData.condivisiCon) dispensaData.condivisiCon = [];
+  dispensaData.condivisiCon.push(email);
+  await doFirestoreSave();
+  showToast(`✅ Condiviso con ${email}`);
+  render();
+}
+
+async function removeCondivisioneEmail(email) {
+  if (!dispensaData) return;
+  dispensaData.condivisiCon = (dispensaData.condivisiCon || []).filter(e => e !== email);
+  await doFirestoreSave();
+  render();
+}
+
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  app.innerHTML = '';
+
+  if (state.view === 'loading') { renderLoading(app); return; }
+  if (state.view === 'login')   { renderLogin(app);   return; }
+  if (state.view === 'home')    { renderHome(app);    return; }
+  if (state.view === 'prodotti') { renderProdotti(app); return; }
+
+  attachEvents();
+}
+
+// ── LOADING ──
+function renderLoading(app) {
+  app.innerHTML = `<div class="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Connessione in corso…</div>
+  </div>`;
+}
+
+// ── LOGIN ──
+function renderLogin(app) {
+  const isReg = state.loginMode === 'register';
+  app.innerHTML = `
+  <div class="login-screen">
+    <div class="login-logo">🏠</div>
+    <div class="login-title">Dispensa Casa</div>
+    <div class="login-sub">Gestione dispensa &amp; lista spesa</div>
+    <div class="login-card">
+      <h3>${isReg ? '📝 Crea account' : '🔑 Accedi'}</h3>
+      <div class="login-error" id="loginError"></div>
+      <input class="login-input" id="loginEmail" type="email" placeholder="Email" autocomplete="email">
+      <input class="login-input" id="loginPassword" type="password" placeholder="Password" autocomplete="${isReg ? 'new-password' : 'current-password'}">
+      ${isReg ? `<input class="login-input" id="loginPassword2" type="password" placeholder="Ripeti password">` : ''}
+      <button class="btn-login-email" id="btnLoginEmail">${isReg ? 'Registrati' : 'Accedi'}</button>
+      <div class="login-divider">oppure</div>
+      <button class="btn-login-google" id="btnLoginGoogle">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-9 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.4 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.6 26.9 36.5 24 36.5c-5.2 0-9.7-3.3-11.3-7.9l-6.6 5.1C9.6 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.5-2.6 4.6-4.8 6l6.2 5.2C40.5 35.8 44 30.3 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+        Accedi con Google
+      </button>
+      <div class="login-toggle" id="loginToggle">${isReg ? 'Hai già un account? Accedi' : 'Non hai un account? Registrati'}</div>
+    </div>
+  </div>`;
+  attachLoginEvents();
+}
+
+function attachLoginEvents() {
+  document.getElementById('btnLoginGoogle')?.addEventListener('click', async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try { await auth.signInWithPopup(provider); }
+    catch (e) { showLoginError(e.message); }
+  });
+
+  document.getElementById('btnLoginEmail')?.addEventListener('click', async () => {
+    const email    = document.getElementById('loginEmail')?.value.trim();
+    const password = document.getElementById('loginPassword')?.value;
+    if (!email || !password) { showLoginError('Compila email e password'); return; }
+    try {
+      if (state.loginMode === 'register') {
+        const pw2 = document.getElementById('loginPassword2')?.value;
+        if (password !== pw2) { showLoginError('Le password non coincidono'); return; }
+        await auth.createUserWithEmailAndPassword(email, password);
+      } else {
+        await auth.signInWithEmailAndPassword(email, password);
+      }
+    } catch (e) { showLoginError(translateAuthError(e.code)); }
+  });
+
+  document.getElementById('loginToggle')?.addEventListener('click', () => {
+    state.loginMode = state.loginMode === 'login' ? 'register' : 'login';
+    render();
+  });
+
+  // Enter on password
+  document.getElementById('loginPassword')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btnLoginEmail')?.click();
+  });
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  if (el) { el.style.display = 'block'; el.textContent = msg; }
+}
+
+function translateAuthError(code) {
+  const map = {
+    'auth/user-not-found': 'Utente non trovato',
+    'auth/wrong-password': 'Password errata',
+    'auth/email-already-in-use': 'Email già registrata',
+    'auth/invalid-email': 'Email non valida',
+    'auth/weak-password': 'Password troppo corta (min 6 caratteri)',
+    'auth/too-many-requests': 'Troppi tentativi, riprova tra poco',
+    'auth/network-request-failed': 'Errore di rete',
+  };
+  return map[code] || 'Errore di accesso';
+}
+
+// ── HOME ──
+function renderHome(app) {
+  const stats = getAllStats();
+  const listaAttivi = getLista().filter(i => !i.acquistato).length;
+  const isOwner = dispensaData?.proprietario === currentUser?.uid;
+
+  app.insertAdjacentHTML('beforeend', `
+    <div class="app-header">
+      <div class="header-main">
+        <div class="header-title">
+          <span class="icon">🏠</span>
+          <h1>Dispensa Casa<span>${currentUser?.displayName || currentUser?.email || ''}</span></h1>
+        </div>
+        <div class="header-actions">
+          <span id="syncDot" class="sync-dot sync-ok" style="margin-right:4px"></span>
+          <button class="btn-icon" id="btnAutoAdd" title="Aggiungi esauriti alla lista">⚡</button>
+          <button class="btn-icon" id="btnLogout" title="Esci">👤</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab ${state.activeTab==='dispensa'?'active':''}" data-tab="dispensa">
+          <span class="tab-icon">🏠</span> Dispensa
+        </button>
+        <button class="tab ${state.activeTab==='lista'?'active':''}" data-tab="lista">
+          <span class="tab-icon">🛒</span> Lista Spesa
+          ${listaAttivi > 0 ? `<span class="badge">${listaAttivi}</span>` : ''}
+        </button>
+        <button class="tab ${state.activeTab==='impostazioni'?'active':''}" data-tab="impostazioni">
+          <span class="tab-icon">⚙️</span> ${isOwner ? 'Impostazioni' : 'Info'}
+        </button>
+      </div>
+    </div>
+  `);
+
+  if (state.activeTab === 'dispensa')      renderDispensa(app, stats);
+  else if (state.activeTab === 'lista')    renderLista(app);
+  else if (state.activeTab === 'impostazioni') renderImpostazioni(app);
+
+  attachEvents();
+}
+
+// ── DISPENSA ──
+function renderDispensa(app, stats) {
+  let html = `<div class="stats-bar">
+    <div class="stat-chip"><span class="stat-dot" style="background:#9ca3af"></span>${stats.tot} prodotti</div>`;
+  if (stats.out > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#e63946"></span>${stats.out} esauriti</div>`;
+  if (stats.low > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#f59e0b"></span>${stats.low} in esaurimento</div>`;
+  if (stats.ok > 0)  html += `<div class="stat-chip"><span class="stat-dot" style="background:#40916c"></span>${stats.ok} ok</div>`;
+  html += `</div>`;
+
+  html += `<div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cerca prodotto…" value="${state.searchQuery}">
+    </div>
+  </div>`;
+
+  html += `<div class="main-content" id="mainContent"></div>`;
+  app.insertAdjacentHTML('beforeend', html);
+
+  const mc = document.getElementById('mainContent');
+
+  if (state.searchQuery.trim()) {
+    renderSearchResults(mc);
+    return;
+  }
+
+  for (const cat of CATEGORIE) {
+    const isOpen = state.catOpenMap[cat.id];
+    let catHtml = `<div class="category-card" data-cat="${cat.id}">
+      <div class="category-header" data-toggle="${cat.id}">
+        <span class="cat-icon">${cat.icona}</span>
+        <div class="cat-info">
+          <div class="cat-name">${cat.nome}</div>
+          <div class="cat-meta">${cat.sottocategorie.length} reparti</div>
+        </div>
+        <span class="cat-chevron ${isOpen?'open':''}">›</span>
+      </div>`;
+
+    if (isOpen) {
+      catHtml += `<div class="subcategory-list">`;
+      for (const sub of cat.sottocategorie) {
+        const sts = getSubcatStats(sub.id);
+        let metaStr = sts.tot === 0 ? 'Vuoto' : `${sts.tot} prodotti`;
+        if (sts.out > 0) metaStr += ` · <span style="color:#e63946;font-weight:700">${sts.out} esauriti</span>`;
+        else if (sts.low > 0) metaStr += ` · <span style="color:#f59e0b;font-weight:700">${sts.low} in esaurimento</span>`;
+        catHtml += `<div class="subcat-item" data-subcat="${sub.id}">
+          <span class="subcat-icon">${sub.icona}</span>
+          <div class="subcat-info">
+            <div class="subcat-name">${sub.nome}</div>
+            <div class="subcat-meta">${metaStr}</div>
+          </div>
+          <span class="subcat-chevron">›</span>
+        </div>`;
+      }
+      catHtml += `</div>`;
+    }
+    catHtml += `</div>`;
+    mc.insertAdjacentHTML('beforeend', catHtml);
+  }
+}
+
+function renderSearchResults(container) {
+  const q = state.searchQuery.trim().toLowerCase();
+  let results = [];
+  const prods = dispensaData?.prodotti || {};
+  for (const cat of CATEGORIE) {
+    for (const sub of cat.sottocategorie) {
+      (prods[sub.id] || []).filter(p => p.nome.toLowerCase().includes(q))
+        .forEach(p => results.push({ p, sub }));
+    }
+  }
+  if (results.length === 0) {
+    container.innerHTML = `<div class="lista-empty"><div class="empty-icon">🔍</div><h3>Nessun risultato</h3><p>Nessun prodotto trovato per "${state.searchQuery}"</p></div>`;
+    return;
+  }
+  container.innerHTML = `<div style="padding:12px 16px 4px"><div class="section-title">${results.length} risultati</div></div>`;
+  const wrap = document.createElement('div');
+  wrap.style.padding = '0 16px 80px';
+  results.forEach(({ p, sub }) => wrap.insertAdjacentHTML('beforeend', renderProdottoCard(p, sub.id, true)));
+  container.appendChild(wrap);
+}
+
+// ── LISTA ──
+function renderLista(app) {
+  const lista = getLista();
+  const attivi = lista.filter(i => !i.acquistato);
+  const acquistati = lista.filter(i => i.acquistato);
+
+  let html = `<div class="lista-section">
+    <div class="add-manual-form">
+      <div class="form-row">
+        <input class="form-input" id="manualNome" placeholder="Aggiungi articolo manuale…" type="text">
+        <button class="btn-save" id="btnAddManual">+</button>
+      </div>
+    </div>`;
+
+  if (lista.length === 0) {
+    html += `<div class="lista-empty">
+      <div class="empty-icon">🛒</div>
+      <h3>Lista vuota</h3>
+      <p>Aggiungi prodotti dalla dispensa oppure digita un articolo.<br>Premi ⚡ per aggiungere automaticamente gli esauriti!</p>
+    </div>`;
+  } else {
+    html += `<div class="lista-actions">
+      ${acquistati.length > 0 ? `<button class="btn-lista-action btn-clear-done" id="btnClearDone">🗑 Acquistati (${acquistati.length})</button>` : ''}
+      <button class="btn-lista-action btn-clear-all" id="btnClearAll">Svuota tutto</button>
+    </div>`;
+    if (attivi.length > 0) {
+      html += `<div class="section-header"><div class="section-title">Da acquistare (${attivi.length})</div></div>`;
+      attivi.forEach(item => { html += renderListaItem(item); });
+    }
+    if (acquistati.length > 0) {
+      html += `<div class="section-header"><div class="section-title">Acquistati (${acquistati.length})</div></div>`;
+      acquistati.forEach(item => { html += renderListaItem(item); });
+    }
+  }
+  html += `</div>`;
+  app.insertAdjacentHTML('beforeend', html);
+}
+
+function renderListaItem(item) {
+  return `<div class="lista-item ${item.acquistato?'acquistato':''}">
+    <button class="check-btn ${item.acquistato?'checked':''}" data-check="${item.id}">${item.acquistato?'✓':''}</button>
+    <div class="lista-info">
+      <div class="lista-nome">${item.nome}</div>
+      <div class="lista-sub">${item.subcatIcon||''} ${item.subcatNome||'Aggiunto manualmente'}</div>
+    </div>
+    <div class="lista-qty">${item.qty > 0 ? item.qty : ''} ${item.unita||''}</div>
+    <button class="btn-delete-prod" data-deletelista="${item.id}">×</button>
+  </div>`;
+}
+
+// ── IMPOSTAZIONI ──
+function renderImpostazioni(app) {
+  if (!dispensaData) return;
+  const isOwner = dispensaData.proprietario === currentUser?.uid;
+  const condivisi = dispensaData.condivisiCon || [];
+
+  let html = `<div class="settings-section">`;
+
+  // Account
+  html += `<div class="settings-card">
+    <div class="settings-card-header"><h3>👤 Account</h3></div>
+    <div class="settings-item">
+      <span class="settings-item-icon">📧</span>
+      <div class="settings-item-info">
+        <div class="settings-item-label">${currentUser?.displayName || 'Utente'}</div>
+        <div class="settings-item-value">${currentUser?.email}</div>
+      </div>
+      <button class="btn-settings btn-danger" id="btnLogoutSettings">Esci</button>
+    </div>
+  </div>`;
+
+  // Condivisione (solo owner)
+  if (isOwner) {
+    html += `<div class="settings-card">
+      <div class="settings-card-header">
+        <h3>🤝 Condivisione</h3>
+        <p>Condividi la dispensa con altri utenti tramite email</p>
+      </div>
+      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <div style="display:flex;gap:8px;width:100%">
+          <input class="form-input" id="shareEmail" type="email" placeholder="email@esempio.com" style="flex:1">
+          <button class="btn-settings btn-primary" id="btnShare">Aggiungi</button>
+        </div>
+        <div id="sharedList">`;
+    if (condivisi.length === 0) {
+      html += `<div style="font-size:12px;color:var(--text-muted)">Nessun utente aggiunto</div>`;
+    } else {
+      condivisi.forEach(email => {
+        html += `<span class="shared-user-chip">📧 ${email}<button data-removeshare="${email}">×</button></span>`;
+      });
+    }
+    html += `</div></div></div>`;
+  } else {
+    html += `<div class="settings-card">
+      <div class="settings-card-header"><h3>🤝 Condivisione</h3></div>
+      <div class="settings-item">
+        <span class="settings-item-icon">👁️</span>
+        <div class="settings-item-info">
+          <div class="settings-item-label">Accesso condiviso</div>
+          <div class="settings-item-value">Dispensa di ${dispensaData.proprietarioEmail}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Info
+  html += `<div class="settings-card">
+    <div class="settings-card-header"><h3>ℹ️ Info</h3></div>
+    <div class="settings-item">
+      <span class="settings-item-icon">☁️</span>
+      <div class="settings-item-info">
+        <div class="settings-item-label">Sincronizzazione</div>
+        <div class="settings-item-value">Firebase Firestore · tempo reale</div>
+      </div>
+    </div>
+    <div class="settings-item">
+      <span class="settings-item-icon">📅</span>
+      <div class="settings-item-info">
+        <div class="settings-item-label">Creata il</div>
+        <div class="settings-item-value">${dispensaData.creatoIl ? new Date(dispensaData.creatoIl).toLocaleDateString('it-IT') : '—'}</div>
+      </div>
+    </div>
+  </div>`;
+
+  html += `</div>`;
+  app.insertAdjacentHTML('beforeend', html);
+}
+
+// ── PRODOTTI VIEW ──
+function renderProdotti(app) {
+  const subcat = findSubcat(state.currentSubcat);
+  const cat    = findCatForSubcat(state.currentSubcat);
+  const prods  = getProdotti(state.currentSubcat);
+
+  app.insertAdjacentHTML('beforeend', `
+    <div class="app-header">
+      <div class="header-main">
+        <div class="header-title">
+          <span class="icon">${subcat?.icona || '📦'}</span>
+          <h1>${subcat?.nome || ''}<span>${cat?.nome || ''}</span></h1>
+        </div>
+        <div class="header-actions">
+          <span id="syncDot" class="sync-dot sync-ok"></span>
+          <button class="btn-icon" id="btnBackHeader">←</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  const container = document.createElement('div');
+  container.className = 'prodotti-container';
+
+  if (state.showAddForm) container.insertAdjacentHTML('beforeend', renderAddForm());
+
+  if (prods.length === 0 && !state.showAddForm) {
+    container.insertAdjacentHTML('beforeend', `<div class="lista-empty" style="padding-top:30px">
+      <div class="empty-icon">${subcat?.icona || '📦'}</div>
+      <h3>Nessun prodotto</h3>
+      <p>Tocca + per aggiungere il primo prodotto.</p>
+    </div>`);
+  } else {
+    const sorted = [...prods].sort((a, b) => {
+      const diff = stockRank(a) - stockRank(b);
+      return diff !== 0 ? diff : a.nome.localeCompare(b.nome);
+    });
+    sorted.forEach(p => container.insertAdjacentHTML('beforeend', renderProdottoCard(p, state.currentSubcat, false)));
+  }
+
+  app.appendChild(container);
+  app.insertAdjacentHTML('beforeend', `<button class="fab" id="fabAdd">+</button>`);
+
+  attachEvents();
+}
+
+function renderProdottoCard(p, subcatId, showSubcat) {
+  const inCart = inLista(p.id);
+  let stockClass = 'stock-ok', stockLabel = 'OK';
+  if (p.qty === 0) { stockClass = 'stock-out'; stockLabel = 'Esaurito'; }
+  else if (p.qty <= p.minQty) { stockClass = 'stock-low'; stockLabel = 'Poco'; }
+
+  const subcat = showSubcat ? findSubcat(subcatId) : null;
+  const subcatInfo = subcat ? `<div style="margin-top:2px;font-size:11px;color:var(--text-muted)">${subcat.icona} ${subcat.nome}</div>` : '';
+
+  return `<div class="prodotto-card">
+    <div class="prodotto-info">
+      <div class="prodotto-nome">${p.nome}</div>
+      <div class="prodotto-details">${p.marca ? p.marca + ' · ' : ''}${p.note || ''}${subcatInfo}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="stock-badge ${stockClass}">${stockLabel}</span>
+      <div class="qty-controls">
+        <button class="qty-btn minus" data-dec="${p.id}" data-subcat="${subcatId}">−</button>
+        <span class="qty-num">${p.qty}</span>
+        <button class="qty-btn plus" data-inc="${p.id}" data-subcat="${subcatId}">+</button>
+      </div>
+      <button class="btn-cart ${inCart?'in-cart':''}" data-cart="${p.id}" data-subcat="${subcatId}">🛒</button>
+      <button class="btn-delete-prod" data-delete="${p.id}" data-subcat="${subcatId}">×</button>
+    </div>
+  </div>`;
+}
+
+function renderAddForm() {
+  return `<div class="add-prodotto-form">
+    <h4>➕ Nuovo prodotto</h4>
+    <div class="form-row">
+      <input class="form-input" id="fNome" placeholder="Nome prodotto *" style="flex:2">
+      <input class="form-input" id="fMarca" placeholder="Marca">
+    </div>
+    <div class="form-row">
+      <input class="form-input" id="fQty"    type="number" placeholder="Qtà"  value="1" min="0" style="max-width:70px">
+      <input class="form-input" id="fMinQty" type="number" placeholder="Min"  value="1" min="0" style="max-width:70px">
+      <input class="form-input" id="fUnita"  placeholder="Unità (pz, kg…)" style="flex:1">
+    </div>
+    <div class="form-row">
+      <input class="form-input" id="fNote" placeholder="Note (opzionale)">
+    </div>
+    <div class="form-row">
+      <button class="btn-save"        id="btnSaveProd">Salva</button>
+      <button class="btn-cancel-form" id="btnCancelForm">Annulla</button>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════
+function attachEvents() {
+  // Tab switching
+  document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => { state.activeTab = btn.dataset.tab; render(); });
+  });
+
+  // Category toggle
+  document.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.catOpenMap[el.dataset.toggle] = !state.catOpenMap[el.dataset.toggle];
+      render();
+    });
+  });
+
+  // Subcat → prodotti
+  document.querySelectorAll('.subcat-item[data-subcat]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.currentSubcat = el.dataset.subcat;
+      state.view = 'prodotti';
+      state.showAddForm = false;
+      render();
+    });
+  });
+
+  // Back
+  document.getElementById('btnBackHeader')?.addEventListener('click', () => { state.view = 'home'; render(); });
+
+  // Logout
+  document.getElementById('btnLogout')?.addEventListener('click', () => auth.signOut());
+  document.getElementById('btnLogoutSettings')?.addEventListener('click', () => auth.signOut());
+
+  // Auto add esauriti
+  document.getElementById('btnAutoAdd')?.addEventListener('click', autoAddEsauriti);
+
+  // FAB
+  document.getElementById('fabAdd')?.addEventListener('click', () => { state.showAddForm = !state.showAddForm; render(); });
+
+  // Save prodotto
+  document.getElementById('btnSaveProd')?.addEventListener('click', () => {
+    const nome = document.getElementById('fNome')?.value.trim();
+    if (!nome) { showToast('⚠️ Inserisci il nome del prodotto'); return; }
+    addProdotto(
+      nome,
+      parseInt(document.getElementById('fQty')?.value || 0),
+      parseInt(document.getElementById('fMinQty')?.value || 1),
+      document.getElementById('fMarca')?.value.trim() || '',
+      document.getElementById('fUnita')?.value.trim() || '',
+      document.getElementById('fNote')?.value.trim() || '',
+    );
+  });
+
+  document.getElementById('btnCancelForm')?.addEventListener('click', () => { state.showAddForm = false; render(); });
+
+  // Qty
+  document.querySelectorAll('[data-inc]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); adjustQty(btn.dataset.inc, btn.dataset.subcat, 1); });
+  });
+  document.querySelectorAll('[data-dec]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); adjustQty(btn.dataset.dec, btn.dataset.subcat, -1); });
+  });
+
+  // Cart
+  document.querySelectorAll('[data-cart]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const prods = getProdotti(btn.dataset.subcat);
+      const p = prods.find(x => x.id === btn.dataset.cart);
+      if (p) toggleLista(p, btn.dataset.subcat);
+    });
+  });
+
+  // Delete prodotto
+  document.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Eliminare questo prodotto?')) deleteProdotto(btn.dataset.delete, btn.dataset.subcat);
+    });
+  });
+
+  // Lista: check
+  document.querySelectorAll('[data-check]').forEach(btn => {
+    btn.addEventListener('click', () => toggleAcquistato(btn.dataset.check));
+  });
+
+  // Lista: delete
+  document.querySelectorAll('[data-deletelista]').forEach(btn => {
+    btn.addEventListener('click', () => deleteListaItem(btn.dataset.deletelista));
+  });
+
+  document.getElementById('btnClearDone')?.addEventListener('click', clearAcquistati);
+  document.getElementById('btnClearAll')?.addEventListener('click', () => {
+    if (confirm('Svuotare tutta la lista della spesa?')) clearAllLista();
+  });
+
+  // Lista manuale
+  const btnManual = document.getElementById('btnAddManual');
+  const inputManual = document.getElementById('manualNome');
+  const doAddManual = () => {
+    const nome = inputManual?.value.trim();
+    if (!nome) return;
+    addManualLista(nome);
+    if (inputManual) inputManual.value = '';
+  };
+  btnManual?.addEventListener('click', doAddManual);
+  inputManual?.addEventListener('keydown', e => { if (e.key === 'Enter') doAddManual(); });
+
+  // Search
+  document.getElementById('searchInput')?.addEventListener('input', e => {
+    state.searchQuery = e.target.value;
+    render();
+  });
+
+  // Impostazioni: condivisione
+  document.getElementById('btnShare')?.addEventListener('click', () => {
+    const email = document.getElementById('shareEmail')?.value;
+    if (email) addCondivisioneEmail(email);
+  });
+  document.getElementById('shareEmail')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btnShare')?.click();
+  });
+
+  document.querySelectorAll('[data-removeshare]').forEach(btn => {
+    btn.addEventListener('click', () => removeCondivisioneEmail(btn.dataset.removeshare));
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+try { screen.orientation.unlock(); } catch(e) {}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+render();
+</script>
 </body>
 </html>
