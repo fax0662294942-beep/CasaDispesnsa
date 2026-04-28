@@ -325,31 +325,47 @@ function findSubcat(id) {
 function findCatForSubcat(subcatId) {
   return CATEGORIE.find(c => c.sottocategorie.some(s => s.id === subcatId));
 }
+// stati: ok | scarso | mancante | comprare
+function getStato(p) {
+  if (p.stato) return p.stato;
+  // backward compat: calcola da qty
+  if ((p.qty || 0) === 0) return 'mancante';
+  if ((p.qty || 0) <= (p.minQty || 1)) return 'scarso';
+  return 'ok';
+}
+const STATO_LABELS = { ok: '✅ OK', scarso: '⚠️ Scarso', mancante: '❌ Mancante', comprare: '🛒 Da Comprare' };
+const STATO_CYCLE  = { ok: 'scarso', scarso: 'mancante', mancante: 'comprare', comprare: 'ok' };
+const STATO_CSS    = { ok: 'stato-ok', scarso: 'stato-scarso', mancante: 'stato-mancante', comprare: 'stato-comprare' };
+const STATO_CARD   = { ok: 'stato-ok-card', scarso: 'stato-scarso-card', mancante: 'stato-mancante-card', comprare: 'stato-comprare-card' };
+
 function getAllStats() {
-  let tot = 0, ok = 0, low = 0, out = 0;
+  let tot = 0, ok = 0, scarso = 0, mancante = 0, comprare = 0;
   const prods = dispensaData?.prodotti || {};
   for (const key in prods) {
     for (const p of prods[key]) {
       tot++;
-      if (p.qty === 0) out++;
-      else if (p.qty <= p.minQty) low++;
-      else ok++;
+      const s = getStato(p);
+      if (s === 'ok') ok++;
+      else if (s === 'scarso') scarso++;
+      else if (s === 'mancante') mancante++;
+      else if (s === 'comprare') comprare++;
     }
   }
-  return { tot, ok, low, out };
+  return { tot, ok, scarso, mancante, comprare };
 }
 function getSubcatStats(subcatId) {
   const prods = getProdotti(subcatId);
-  return {
-    tot: prods.length,
-    low: prods.filter(p => p.qty > 0 && p.qty <= p.minQty).length,
-    out: prods.filter(p => p.qty === 0).length,
-  };
+  const m = prods.filter(p => getStato(p) === 'mancante').length;
+  const s = prods.filter(p => getStato(p) === 'scarso').length;
+  const c = prods.filter(p => getStato(p) === 'comprare').length;
+  return { tot: prods.length, mancante: m, scarso: s, comprare: c };
 }
 function stockRank(p) {
-  if (p.qty === 0) return 0;
-  if (p.qty <= p.minQty) return 1;
-  return 2;
+  const s = getStato(p);
+  if (s === 'mancante') return 0;
+  if (s === 'comprare') return 1;
+  if (s === 'scarso') return 2;
+  return 3;
 }
 
 // ══════════════════════════════════════════════════════
@@ -472,6 +488,22 @@ function adjustQty(prodId, subcatId, delta) {
   const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
   if (!p) return;
   p.qty = Math.max(0, (p.qty || 0) + delta);
+  // aggiorna stato automaticamente solo se non era 'comprare'
+  if (p.stato !== 'comprare') {
+    if (p.qty === 0) p.stato = 'mancante';
+    else if (p.qty <= (p.minQty || 1)) p.stato = 'scarso';
+    else p.stato = 'ok';
+  }
+  scheduleFirestoreSave();
+  render();
+}
+
+function toggleStato(prodId, subcatId) {
+  if (!dispensaData.prodotti?.[subcatId]) return;
+  const p = dispensaData.prodotti[subcatId].find(x => x.id === prodId);
+  if (!p) return;
+  const curr = getStato(p);
+  p.stato = STATO_CYCLE[curr];
   scheduleFirestoreSave();
   render();
 }
@@ -479,9 +511,12 @@ function adjustQty(prodId, subcatId, delta) {
 function addProdotto(nome, qty, minQty, marca, unita, note) {
   if (!dispensaData.prodotti) dispensaData.prodotti = {};
   if (!dispensaData.prodotti[state.currentSubcat]) dispensaData.prodotti[state.currentSubcat] = [];
+  let stato = 'ok';
+  if (qty === 0) stato = 'mancante';
+  else if (qty <= minQty) stato = 'scarso';
   dispensaData.prodotti[state.currentSubcat].push({
     id: Date.now() + '_' + Math.random().toString(36).slice(2),
-    nome, qty, minQty, marca, unita, note
+    nome, qty, minQty, marca, unita, note, stato
   });
   scheduleFirestoreSave();
   state.showAddForm = false;
@@ -514,6 +549,11 @@ function toggleLista(prod, subcatId) {
       subcatIcon: subcat?.icona || '',
       acquistato: false,
     });
+    // quando si aggiunge a spesa, segna come 'comprare'
+    if (prod.stato !== 'ok') prod.stato = 'comprare';
+    scheduleFirestoreSave();
+    render();
+    return;
   }
   scheduleFirestoreSave();
   render();
@@ -559,7 +599,8 @@ function autoAddEsauriti() {
   let added = 0;
   for (const key in prods) {
     for (const p of prods[key]) {
-      if (p.qty === 0 && !inLista(p.id)) {
+      const s = getStato(p);
+      if ((s === 'mancante' || s === 'scarso') && !inLista(p.id)) {
         const subcat = findSubcat(key);
         if (!dispensaData.lista) dispensaData.lista = [];
         dispensaData.lista.push({
@@ -569,12 +610,13 @@ function autoAddEsauriti() {
           subcatNome: subcat?.nome || '', subcatIcon: subcat?.icona || '',
           acquistato: false,
         });
+        p.stato = 'comprare';
         added++;
       }
     }
   }
   if (added > 0) { scheduleFirestoreSave(); showToast(`✅ ${added} prodotti aggiunti alla lista!`); render(); }
-  else showToast('Nessun prodotto esaurito da aggiungere');
+  else showToast('Nessun prodotto mancante/scarso da aggiungere');
 }
 
 async function addCondivisioneEmail(email) {
@@ -756,9 +798,10 @@ function renderHome(app) {
 function renderDispensa(app, stats) {
   let html = `<div class="stats-bar">
     <div class="stat-chip"><span class="stat-dot" style="background:#9ca3af"></span>${stats.tot} prodotti</div>`;
-  if (stats.out > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#e63946"></span>${stats.out} esauriti</div>`;
-  if (stats.low > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#f59e0b"></span>${stats.low} in esaurimento</div>`;
-  if (stats.ok > 0)  html += `<div class="stat-chip"><span class="stat-dot" style="background:#40916c"></span>${stats.ok} ok</div>`;
+  if (stats.mancante > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#e63946"></span>${stats.mancante} mancanti</div>`;
+  if (stats.comprare > 0) html += `<div class="stat-chip"><span class="stat-dot" style="background:#3b82f6"></span>${stats.comprare} da comprare</div>`;
+  if (stats.scarso > 0)   html += `<div class="stat-chip"><span class="stat-dot" style="background:#f59e0b"></span>${stats.scarso} scarsi</div>`;
+  if (stats.ok > 0)       html += `<div class="stat-chip"><span class="stat-dot" style="background:#40916c"></span>${stats.ok} ok</div>`;
   html += `</div>`;
 
   html += `<div class="search-bar">
@@ -795,8 +838,9 @@ function renderDispensa(app, stats) {
       for (const sub of cat.sottocategorie) {
         const sts = getSubcatStats(sub.id);
         let metaStr = sts.tot === 0 ? 'Vuoto' : `${sts.tot} prodotti`;
-        if (sts.out > 0) metaStr += ` · <span style="color:#e63946;font-weight:700">${sts.out} esauriti</span>`;
-        else if (sts.low > 0) metaStr += ` · <span style="color:#f59e0b;font-weight:700">${sts.low} in esaurimento</span>`;
+        if (sts.mancante > 0) metaStr += ` · <span style="color:#e63946;font-weight:700">${sts.mancante} mancanti</span>`;
+        if (sts.comprare > 0) metaStr += ` · <span style="color:#3b82f6;font-weight:700">${sts.comprare} da comprare</span>`;
+        if (sts.scarso > 0)   metaStr += ` · <span style="color:#f59e0b;font-weight:700">${sts.scarso} scarsi</span>`;
         catHtml += `<div class="subcat-item" data-subcat="${sub.id}">
           <span class="subcat-icon">${sub.icona}</span>
           <div class="subcat-info">
@@ -830,6 +874,8 @@ function renderSearchResults(container) {
   container.innerHTML = `<div style="padding:12px 16px 4px"><div class="section-title">${results.length} risultati</div></div>`;
   const wrap = document.createElement('div');
   wrap.style.padding = '0 16px 80px';
+  // sort mancanti/comprare first in search results too
+  results.sort((a,b) => stockRank(a.p) - stockRank(b.p));
   results.forEach(({ p, sub }) => wrap.insertAdjacentHTML('beforeend', renderProdottoCard(p, sub.id, true)));
   container.appendChild(wrap);
 }
@@ -1009,27 +1055,29 @@ function renderProdotti(app) {
 }
 
 function renderProdottoCard(p, subcatId, showSubcat) {
-  const inCart = inLista(p.id);
-  let stockClass = 'stock-ok', stockLabel = 'OK';
-  if (p.qty === 0) { stockClass = 'stock-out'; stockLabel = 'Esaurito'; }
-  else if (p.qty <= p.minQty) { stockClass = 'stock-low'; stockLabel = 'Poco'; }
-
+  const inLst = inLista(p.id);
+  const stato = getStato(p);
+  const statoLabel = STATO_LABELS[stato];
+  const statoCss   = STATO_CSS[stato];
+  const cardCss    = STATO_CARD[stato];
   const subcat = showSubcat ? findSubcat(subcatId) : null;
-  const subcatInfo = subcat ? `<div style="margin-top:2px;font-size:11px;color:var(--text-muted)">${subcat.icona} ${subcat.nome}</div>` : '';
+  const subcatInfo = subcat ? `<span style="font-size:11px;color:var(--text-muted)">${subcat.icona} ${subcat.nome} · </span>` : '';
+  const qtyInfo = p.unita ? `Qtà: ${p.qty} ${p.unita}` : `Qtà: ${p.qty}`;
+  const dettagli = [p.marca, p.note].filter(Boolean).join(' · ');
 
-  return `<div class="prodotto-card">
+  return `<div class="prodotto-card ${cardCss}">
     <div class="prodotto-info">
       <div class="prodotto-nome">${p.nome}</div>
-      <div class="prodotto-details">${p.marca ? p.marca + ' · ' : ''}${p.note || ''}${subcatInfo}</div>
+      <div class="prodotto-details">${subcatInfo}${dettagli ? dettagli + ' · ' : ''}${qtyInfo}</div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span class="stock-badge ${stockClass}">${stockLabel}</span>
+    <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="stato-badge ${statoCss}" data-stato="${p.id}" data-subcat="${subcatId}">${statoLabel}</button>
       <div class="qty-controls">
         <button class="qty-btn minus" data-dec="${p.id}" data-subcat="${subcatId}">−</button>
         <span class="qty-num">${p.qty}</span>
         <button class="qty-btn plus" data-inc="${p.id}" data-subcat="${subcatId}">+</button>
       </div>
-      <button class="btn-cart ${inCart?'in-cart':''}" data-cart="${p.id}" data-subcat="${subcatId}">🛒</button>
+      <button class="btn-spesa ${inLst?'in-lista':''}" data-cart="${p.id}" data-subcat="${subcatId}">🛒 ${inLst ? 'In spesa' : 'Spesa'}</button>
       <button class="btn-delete-prod" data-delete="${p.id}" data-subcat="${subcatId}">×</button>
     </div>
   </div>`;
@@ -1121,7 +1169,12 @@ function attachEvents() {
     btn.addEventListener('click', e => { e.stopPropagation(); adjustQty(btn.dataset.dec, btn.dataset.subcat, -1); });
   });
 
-  // Cart
+  // Tap-to-cycle stato
+  document.querySelectorAll('[data-stato]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); toggleStato(btn.dataset.stato, btn.dataset.subcat); });
+  });
+
+  // Spesa
   document.querySelectorAll('[data-cart]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
