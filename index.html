@@ -293,6 +293,24 @@ body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--text);min-he
 .icona-preview{width:48px;height:48px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;flex-shrink:0;}
 .icona-preview:active{background:var(--green-pale);}
 .icona-change-hint{font-size:11px;color:var(--text-muted);}
+/* AUTOADD MODAL */
+.autoadd-list{max-height:55vh;overflow-y:auto;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.autoadd-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;}
+.autoadd-row:last-child{border-bottom:none;}
+.autoadd-row:active{background:var(--green-pale);}
+.autoadd-row.selected{background:#f0fdf4;}
+.autoadd-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all 0.15s;}
+.autoadd-check.on{background:var(--green-mid);border-color:var(--green-mid);color:white;}
+.autoadd-info{flex:1;min-width:0;}
+.autoadd-nome{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.autoadd-sub{font-size:11px;color:var(--text-muted);margin-top:1px;}
+.autoadd-stato{font-size:11px;font-weight:700;font-family:'Nunito',sans-serif;flex-shrink:0;}
+.autoadd-stato.mancante{color:#e63946;}
+.autoadd-stato.scarso{color:#f59e0b;}
+.autoadd-toolbar{display:flex;gap:8px;padding:8px 0 12px;align-items:center;}
+.btn-autoadd-all{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:white;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer;}
+.btn-autoadd-all:active{background:var(--green-pale);}
+.autoadd-count{font-size:12px;color:var(--text-muted);font-family:'Nunito',sans-serif;margin-left:auto;}
 /* TOAST */
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green-dark);color:white;padding:9px 18px;border-radius:20px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -656,14 +674,39 @@ function clearAllLista(){
 
 function autoAddEsauriti(){
   if(!dispensaData)return;
-  let added=0;
+  // Raccogli candidati
+  const candidati=[];
   for(const p of getAllProdotti()){
     if(p.attivo===false||p.daComprare)continue;
     const s=getStato(p);
-    if(s==='mancante'||s==='scarso'){const mi=negozioMinId(p);const pr=mi?(p.prezziNegozi||{})[mi]:null;addToLista(p,p._subId,mi,pr,null);added++;}
+    if(s==='mancante'||s==='scarso'){
+      const mi=negozioMinId(p);
+      const pr=mi?(p.prezziNegozi||{})[mi]:null;
+      const sub=findSubcat(p._subId);
+      candidati.push({p,subId:p._subId,mi,pr,stato:s,subNome:sub?.nome||'',subIcona:sub?.icona||''});
+    }
   }
+  if(!candidati.length){showToast('Nessun prodotto mancante/scarso da aggiungere');return;}
+  // Apri modal di conferma
+  S.modalOpen=true;
+  S.modalType='autoAdd';
+  S._autoAddCandidati=candidati;
+  render();
+}
+
+function eseguiAutoAdd(selezionati){
+  // selezionati = array di indici
+  const cands=S._autoAddCandidati||[];
+  let added=0;
+  selezionati.forEach(idx=>{
+    const {p,subId,mi,pr}=cands[idx];
+    addToLista(p,subId,mi,pr,null);
+    added++;
+  });
+  S._autoAddCandidati=null;
+  S.modalOpen=false;S.modalType=null;
   if(added>0)showToast(`✅ ${added} prodotti aggiunti alla lista!`);
-  else showToast('Nessun prodotto mancante/scarso da aggiungere');
+  render();
 }
 
 function calcolaTotale(items){let tot=0,compl=true;for(const i of items){if(i.prezzoUnitario)tot+=i.prezzoUnitario*(i.qty||1);else compl=false;}return{tot,compl};}
@@ -1136,6 +1179,7 @@ function renderModal(app){
   else if(S.modalType==='luogo')      renderModalLuogo(app);
   else if(S.modalType==='categoria')  renderModalCategoria(app);
   else if(S.modalType==='confronto')  renderModalConfronto(app);
+  else if(S.modalType==='autoAdd')    renderModalAutoAdd(app);
 }
 
 function closeModal(){S.modalOpen=false;S.modalProd=null;S.modalType=null;S.modalNegozio=null;S.modalLuogo=null;S.modalCat=null;render();}
@@ -1458,6 +1502,86 @@ function renderModalCategoria(app){
     saveCategoria({...cat,nome,icona,sottocategorie});
   });
   document.getElementById('btnModalDelete')?.addEventListener('click',()=>{if(confirm(`Eliminare "${cat.nome}"? I prodotti rimarranno senza categoria.`))deleteCategoria(cat.id);});
+}
+
+// ═══════════════════════════════════════════════
+// MODAL AUTO-ADD ESAURITI
+// ═══════════════════════════════════════════════
+function renderModalAutoAdd(app){
+  const cands=S._autoAddCandidati||[];
+  // stato selezione: tutti selezionati per default
+  if(!S._autoAddSel) S._autoAddSel=new Set(cands.map((_,i)=>i));
+  const sel=S._autoAddSel;
+
+  let righe='';
+  cands.forEach((item,i)=>{
+    const{p,subNome,subIcona,stato}=item;
+    const on=sel.has(i);
+    righe+=`<div class="autoadd-row ${on?'selected':''}" data-autoadd-row="${i}">
+      <div class="autoadd-check ${on?'on':''}">${on?'✓':''}</div>
+      <div class="autoadd-info">
+        <div class="autoadd-nome">${p.icona?p.icona+' ':''}${p.nome}</div>
+        <div class="autoadd-sub">${subIcona} ${subNome}</div>
+      </div>
+      <div class="autoadd-stato ${stato}">${stato==='mancante'?'❌ Mancante':'⚠️ Scarso'}</div>
+    </div>`;
+  });
+
+  const totSel=sel.size;
+  const tuttiSel=sel.size===cands.length;
+
+  app.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>⚡ Aggiungi alla lista</h3>
+        <button class="btn-close-modal" id="btnCloseModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          Seleziona i prodotti da aggiungere alla lista della spesa.
+        </div>
+        <div class="autoadd-toolbar">
+          <button class="btn-autoadd-all" id="btnSelAll">${tuttiSel?'Deseleziona tutti':'Seleziona tutti'}</button>
+          <span class="autoadd-count">${totSel} / ${cands.length} selezionati</span>
+        </div>
+        <div class="autoadd-list">${righe}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-save" id="btnModalSave" ${totSel===0?'disabled style="opacity:0.5"':''}>
+          ➕ Aggiungi ${totSel>0?totSel+' prodotti':''}
+        </button>
+        <button class="btn-modal-cancel" id="btnModalCancel">Annulla</button>
+      </div>
+    </div>
+  </div>`);
+
+  const doClose=()=>{S.modalOpen=false;S.modalType=null;S._autoAddCandidati=null;S._autoAddSel=null;render();};
+  document.getElementById('modalOverlay')?.addEventListener('click',e=>{if(e.target.id==='modalOverlay')doClose();});
+  document.getElementById('btnCloseModal')?.addEventListener('click',doClose);
+  document.getElementById('btnModalCancel')?.addEventListener('click',doClose);
+
+  // toggle singolo
+  document.querySelectorAll('[data-autoadd-row]').forEach(row=>{
+    row.addEventListener('click',()=>{
+      const i=parseInt(row.dataset.autoaddRow);
+      if(sel.has(i)) sel.delete(i); else sel.add(i);
+      render();
+    });
+  });
+
+  // seleziona/deseleziona tutti
+  document.getElementById('btnSelAll')?.addEventListener('click',()=>{
+    if(sel.size===cands.length) sel.clear();
+    else cands.forEach((_,i)=>sel.add(i));
+    render();
+  });
+
+  // conferma
+  document.getElementById('btnModalSave')?.addEventListener('click',()=>{
+    if(sel.size===0){showToast('Seleziona almeno un prodotto');return;}
+    eseguiAutoAdd([...sel]);
+    S._autoAddSel=null;
+  });
 }
 
 // ═══════════════════════════════════════════════
