@@ -869,7 +869,7 @@ function renderHome(app){
   app.insertAdjacentHTML('beforeend',`
     <div class="app-header">
       <div class="header-main">
-        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.1</span></h1></div>
+        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.2</span></h1></div>
         <div class="header-actions">
           <span id="syncDot" class="sync-dot sync-ok"></span>
           <button class="btn-icon" id="btnAutoAdd">⚡</button>
@@ -1510,7 +1510,7 @@ function renderModalCategoria(app){
 function renderModalAutoAdd(app){
   const cands=S._autoAddCandidati||[];
   // stato selezione: tutti selezionati per default
-  if(!S._autoAddSel) S._autoAddSel=new Set(cands.map((_,i)=>i));
+  if(!S._autoAddSel) S._autoAddSel=new Set(); // default: nessuno selezionato
   const sel=S._autoAddSel;
 
   let righe='';
@@ -1698,22 +1698,19 @@ function attachProdottoCardEvents(){
 // ═══════════════════════════════════════════════
 try{screen.orientation.unlock();}catch(e){}
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(reg=>{
-    // Forza check aggiornamento ad ogni avvio
+  // Versione app — cambia questo numero ad ogni deploy per forzare aggiornamento
+  const APP_VERSION = '7.2';
+  navigator.serviceWorker.register('sw.js?v='+APP_VERSION).then(reg=>{
     reg.update();
-    // Se c'è un nuovo SW in attesa, attivalo subito
     reg.addEventListener('updatefound',()=>{
       const newSW=reg.installing;
       newSW.addEventListener('statechange',()=>{
         if(newSW.state==='installed'&&navigator.serviceWorker.controller){
-          // Nuovo SW pronto: ricarica la pagina
-          navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
-          window.location.reload();
+          newSW.postMessage({type:'SKIP_WAITING'});
         }
       });
     });
   }).catch(()=>{});
-  // Ricarica quando il SW cambia
   navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
 }
 history.pushState(null,'',location.href);
