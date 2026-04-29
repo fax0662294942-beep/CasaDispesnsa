@@ -869,7 +869,7 @@ function renderHome(app){
   app.insertAdjacentHTML('beforeend',`
     <div class="app-header">
       <div class="header-main">
-        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''}</span></h1></div>
+        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.1</span></h1></div>
         <div class="header-actions">
           <span id="syncDot" class="sync-dot sync-ok"></span>
           <button class="btn-icon" id="btnAutoAdd">⚡</button>
@@ -1697,7 +1697,25 @@ function attachProdottoCardEvents(){
 // INIT
 // ═══════════════════════════════════════════════
 try{screen.orientation.unlock();}catch(e){}
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // Forza check aggiornamento ad ogni avvio
+    reg.update();
+    // Se c'è un nuovo SW in attesa, attivalo subito
+    reg.addEventListener('updatefound',()=>{
+      const newSW=reg.installing;
+      newSW.addEventListener('statechange',()=>{
+        if(newSW.state==='installed'&&navigator.serviceWorker.controller){
+          // Nuovo SW pronto: ricarica la pagina
+          navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+          window.location.reload();
+        }
+      });
+    });
+  }).catch(()=>{});
+  // Ricarica quando il SW cambia
+  navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
+}
 history.pushState(null,'',location.href);
 window.addEventListener('popstate',function(){history.pushState(null,'',location.href);navigateBack();});
 document.addEventListener('backbutton',navigateBack,false);
