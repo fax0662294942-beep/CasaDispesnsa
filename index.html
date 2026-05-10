@@ -869,7 +869,7 @@ function renderHome(app){
   app.insertAdjacentHTML('beforeend',`
     <div class="app-header">
       <div class="header-main">
-        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.2</span></h1></div>
+        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.3</span></h1></div>
         <div class="header-actions">
           <span id="syncDot" class="sync-dot sync-ok"></span>
           <button class="btn-icon" id="btnAutoAdd">⚡</button>
@@ -1099,6 +1099,12 @@ function renderImpostazioni(app){
         <div>${condivisi.length?condivisi.map(e=>`<span class="shared-chip">📧 ${e}<button data-removeshare="${e}">×</button></span>`).join(''):`<span style="font-size:12px;color:var(--text-muted)">Nessun utente aggiunto</span>`}</div>
       </div></div>`;
   }
+  // Info & Versione
+  html+=`<div class="settings-card"><div class="settings-card-header"><h3>ℹ️ Info</h3></div>
+    <div class="settings-item"><span class="settings-item-icon">🏷️</span><div class="settings-item-info"><div class="settings-item-label">Versione</div><div class="settings-item-value" style="font-weight:800;color:var(--green-mid);font-size:15px">v7.3</div></div></div>
+    <div class="settings-item"><span class="settings-item-icon">☁️</span><div class="settings-item-info"><div class="settings-item-label">Sincronizzazione</div><div class="settings-item-value">Firebase Firestore · tempo reale</div></div></div>
+    <div class="settings-item"><span class="settings-item-icon">📅</span><div class="settings-item-info"><div class="settings-item-label">Dispensa creata il</div><div class="settings-item-value">${dispensaData?.creatoIl?new Date(dispensaData.creatoIl).toLocaleDateString('it-IT'):'—'}</div></div></div>
+  </div>`;
   html+=`</div>`;
   app.insertAdjacentHTML('beforeend',html);
 }
@@ -1653,8 +1659,23 @@ function attachHomeEvents(){
   const doManual=()=>{const v=document.getElementById('manualNome')?.value.trim();if(v){addManualLista(v);document.getElementById('manualNome').value='';}};
   document.getElementById('btnAddManual')?.addEventListener('click',doManual);
   document.getElementById('manualNome')?.addEventListener('keydown',e=>{if(e.key==='Enter')doManual();});
-  // search
-  document.getElementById('searchInput')?.addEventListener('input',e=>{S.searchQuery=e.target.value;render();});
+  // search: aggiorna solo il contenuto senza re-render completo (evita perdita focus tastiera)
+  document.getElementById('searchInput')?.addEventListener('input',e=>{
+    S.searchQuery=e.target.value;
+    const mc=document.getElementById('mainContent');
+    if(mc){
+      mc.innerHTML='';
+      if(S.searchQuery.trim()) renderSearchResults(mc);
+      else if(S.vistaDispensa==='categorie') renderVistaCategorie(mc);
+      else renderVistaLuoghi(mc);
+      // riattacca eventi sulle card risultati
+      attachProdottoCardEvents();
+      // riattacca toggle categorie/luoghi
+      document.querySelectorAll('[data-toggle]').forEach(el=>el.addEventListener('click',()=>{S.catOpenMap[el.dataset.toggle]=!S.catOpenMap[el.dataset.toggle];const mc2=document.getElementById('mainContent');if(mc2){mc2.innerHTML='';renderVistaCategorie(mc2);attachProdottoCardEvents();document.querySelectorAll('.subcat-row[data-subcat]').forEach(el2=>el2.addEventListener('click',()=>navigateTo('prodotti',el2.dataset.subcat)));}}));
+      document.querySelectorAll('[data-toggleluogo]').forEach(el=>el.addEventListener('click',()=>{S.luogoOpenMap[el.dataset.toggleluogo]=!S.luogoOpenMap[el.dataset.toggleluogo];const mc2=document.getElementById('mainContent');if(mc2){mc2.innerHTML='';renderVistaLuoghi(mc2);attachProdottoCardEvents();}}));
+      document.querySelectorAll('.subcat-row[data-subcat]').forEach(el=>el.addEventListener('click',()=>navigateTo('prodotti',el.dataset.subcat)));
+    }
+  });
   // impostazioni: categorie
   document.getElementById('btnAddCat')?.addEventListener('click',()=>{S.modalOpen=true;S.modalType='categoria';S.modalCat=null;render();});
   document.querySelectorAll('[data-editcat]').forEach(btn=>btn.addEventListener('click',()=>{const cat=getCategorie().find(c=>c.id===btn.dataset.editcat);if(cat){S.modalOpen=true;S.modalType='categoria';S.modalCat={...cat};render();}}));
@@ -1699,7 +1720,7 @@ function attachProdottoCardEvents(){
 try{screen.orientation.unlock();}catch(e){}
 if('serviceWorker' in navigator){
   // Versione app — cambia questo numero ad ogni deploy per forzare aggiornamento
-  const APP_VERSION = '7.2';
+  const APP_VERSION = '7.3';
   navigator.serviceWorker.register('sw.js?v='+APP_VERSION).then(reg=>{
     reg.update();
     reg.addEventListener('updatefound',()=>{
