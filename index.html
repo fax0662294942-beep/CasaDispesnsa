@@ -364,17 +364,23 @@ const COLORI = ['#e63946','#f77f00','#2d6a4f','#2563eb','#7c3aed','#db2777','#08
 
 // Emoji picker raggruppate per tema
 const EMOJI_GROUPS = {
-  'Cibo & Cucina': ['🍎','🥦','🥕','🍅','🍋','🍇','🫐','🍓','🥝','🍈','🌽','🥑','🧅','🧄','🥔','🫛',
-    '🥩','🐟','🥚','🧀','🥛','🧈','🍞','🥖','🥐','🫓','🍝','🍚','🍜','🫙','🥫','🍯','🫒','🥜',
-    '🧂','🌿','🫚','☕','🍵','🧃','🥤','🍷','🍺','🫗','🥃'],
-  'Casa & Luoghi': ['🏠','🛋️','🛏️','🚿','🛁','🪑','🚪','🪟','🏡','🏘️','🏗️','🏢',
-    '❄️','🧊','🫙','📦','🗄️','🗃️','🗑️','🧺','🪣','🧹','🧽','🧻','🪴','🌡️','💡'],
-  'Dispensa & Mobili': ['🗄️','📦','🛒','🏪','🛍️','💼','🎒','👜','🧳','📫','🗂️','📋',
-    '🔒','🔑','🪝','🧲','📌','📍','🗺️'],
-  'Pulizia & Igiene': ['🧴','🧼','🪥','🪒','💊','🩺','🩹','🧻','🪣','🧹','🫧','🚽','🚿','🛁'],
-  'Attrezzatura': ['🔧','🪛','🔨','⚙️','🔩','🪚','🗜️','🔌','🔋','💡','📱','💻','🖥️','⌚','📷'],
-  'Animali': ['🐕','🐈','🐠','🐇','🐢','🐹','🦜','🐓','🐄','🐖','🐑'],
-  'Varie': ['⭐','❤️','✅','⚠️','❌','🔴','🟡','🟢','🔵','🟣','🟠','⬜','🏷️','🎁','🛎️','📣'],
+  '🥩 Carne & Pesce': ['🥩','🍗','🍖','🥓','🌭','🍔','🐟','🐠','🦐','🦑','🦞','🦀','🦪','🍣','🥚','🍳'],
+  '🥦 Frutta & Verdura': ['🍎','🍊','🍋','🍇','🍓','🫐','🍑','🍒','🍍','🥭','🍌','🍉','🍈','🥝','🍅',
+    '🫒','🥑','🥦','🥕','🌽','🧅','🧄','🥔','🫛','🥒','🫑','🥬','🥗','🌶️','🫚'],
+  '🥛 Latticini & Uova': ['🥛','🧀','🧈','🍦','🍨','🍧','🥚','🍮','🫙'],
+  '🍞 Pane & Cereali': ['🍞','🥖','🥐','🫓','🧇','🥞','🍩','🧁','🎂','🍰','🍪','🥨','🥯','🫘','🌾'],
+  '🍝 Pasta & Condimenti': ['🍝','🍜','🍚','🍛','🫕','🥘','🍲','🫙','🥫','🍯','🧂','🌿','🫚','🥜','🫛'],
+  '🧃 Bevande': ['☕','🍵','🧋','🥤','🧃','🍷','🍸','🍹','🍺','🫗','🥃','🍶','🧉','🫖','🥛','💧'],
+  '🍫 Snack & Dolci': ['🍫','🍬','🍭','🍮','🍯','🍩','🍪','🎂','🍰','🧁','🍦','🍨','🍧','🍡','🍿','🥐'],
+  '🧴 Igiene & Cura': ['🧴','🧼','🪥','🪒','💊','🩺','🩹','🧻','💉','🩻','💆','🛁','🚿','🪞','🧖'],
+  '🧹 Pulizia Casa': ['🧹','🧺','🪣','🧽','🫧','🪠','🗑️','🧻','🪤','🧯','🔦','🕯️'],
+  '🐾 Pet Food': ['🐕','🐈','🐠','🐇','🐢','🐹','🦜','🐾','🦴','🐡','🐓','🐄'],
+  '👶 Bambini & Neonati': ['🍼','🧸','🪀','🎠','👶','🧒','🪆','🎒','✏️','📚'],
+  '🏠 Casa & Luoghi': ['🏠','🛋️','🛏️','🚪','🪟','🏡','❄️','🧊','📦','🗄️','🧺','💡','🔌','🔋','🌡️'],
+  '🛒 Spesa Generale': ['🛒','🏪','🛍️','🏷️','💳','🧾','📦','🫙','🥡','🍱','🧆','🥙','🌮','🌯'],
+  '🔧 Attrezzatura': ['🔧','🪛','🔨','⚙️','🔩','🪚','🗜️','🔌','🔋','💡','📱','💻','⌚','📷','🔑','🪝'],
+  '🌿 Bio & Naturale': ['🌿','🌱','🍃','🌾','🌻','🫚','🍵','🌰','🫘','🥜','🌊','🍀'],
+  '⭐ Varie': ['⭐','❤️','✅','⚠️','❌','🔴','🟡','🟢','🔵','🟣','🟠','⬜','🎁','📣','🏷️','🔖','📌','📍'],
 };
 
 const STATO_LABELS = {ok:'✅ OK',scarso:'⚠️ Scarso',mancante:'❌ Mancante'};
@@ -869,7 +875,7 @@ function renderHome(app){
   app.insertAdjacentHTML('beforeend',`
     <div class="app-header">
       <div class="header-main">
-        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.3</span></h1></div>
+        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.5</span></h1></div>
         <div class="header-actions">
           <span id="syncDot" class="sync-dot sync-ok"></span>
           <button class="btn-icon" id="btnAutoAdd">⚡</button>
@@ -936,13 +942,20 @@ function renderVistaCategorie(mc){
   for(const cat of tutteLeCat){
     const isOpen=S.catOpenMap[cat.id];
     const sottocategorie=cat.id==='_senza'?[{id:'_senza',nome:'Senza categoria',icona:'📂'}]:(cat.sottocategorie||[]);
-    let catTot=0,catProblemi=0;
-    sottocategorie.forEach(s=>{const st=getSubcatStats(s.id);catTot+=st.tot;catProblemi+=st.mancante+st.daComprare+st.scarso;});
+    let catTot=0,catDaComprare=0,catMancanti=0,catScarsi=0;
+    sottocategorie.forEach(s=>{const st=getSubcatStats(s.id);catTot+=st.tot;catDaComprare+=st.daComprare;catMancanti+=st.mancante;catScarsi+=st.scarso;});
+    const catDaGestire=catMancanti+catScarsi;
+
+    let catMetaParts=[];
+    catMetaParts.push(`${sottocategorie.length} reparti · ${catTot} prodotti`);
+    let catExtra='';
+    if(catDaComprare>0) catExtra+=` · <span style="color:#f77f00;font-weight:800">${catDaComprare} da comprare</span>`;
+    if(catDaGestire>0) catExtra+=` · <span style="color:#e63946;font-weight:400">${catDaGestire} da gestire</span>`;
 
     let ch=`<div class="group-card"><div class="group-header" data-toggle="${cat.id}">
       <span class="group-icon">${cat.icona}</span>
       <div class="group-info"><div class="group-name">${cat.nome}</div>
-      <div class="group-meta">${sottocategorie.length} reparti · ${catTot} prodotti${catProblemi>0?` · <span style="color:#e63946;font-weight:700">${catProblemi} da gestire</span>`:''}</div></div>
+      <div class="group-meta">${catMetaParts.join('')}${catExtra}</div></div>
       <span class="group-chevron ${isOpen?'open':''}">›</span></div>`;
 
     if(isOpen){
@@ -950,9 +963,9 @@ function renderVistaCategorie(mc){
       for(const sub of sottocategorie){
         const sts=getSubcatStats(sub.id);
         let meta=sts.tot===0?'Vuoto':`${sts.tot} prodotti`;
-        if(sts.mancante>0) meta+=` · <span style="color:#e63946;font-weight:700">${sts.mancante} mancanti</span>`;
-        if(sts.daComprare>0) meta+=` · <span style="color:#f77f00;font-weight:700">${sts.daComprare} da comprare</span>`;
-        if(sts.scarso>0) meta+=` · <span style="color:#f59e0b;font-weight:700">${sts.scarso} scarsi</span>`;
+        if(sts.daComprare>0) meta+=` · <span style="color:#f77f00;font-weight:800">${sts.daComprare} da comprare</span>`;
+        const daGestire=(sts.mancante||0)+(sts.scarso||0);
+        if(daGestire>0) meta+=` · <span style="color:#e63946;font-weight:400">${daGestire} da gestire</span>`;
         ch+=`<div class="subcat-row" data-subcat="${sub.id}">
           <span class="subcat-icon">${sub.icona}</span>
           <div class="subcat-info"><div class="subcat-name">${sub.nome}</div><div class="subcat-meta">${meta}</div></div>
@@ -984,9 +997,9 @@ function renderVistaLuoghi(mc){
     const daComprare=prods.filter(p=>p.daComprare).length;
     const scarsi=prods.filter(p=>getStato(p)==='scarso').length;
     let meta=prods.length===0?'Vuoto':`${prods.length} prodotti`;
-    if(mancanti>0) meta+=` · <span style="color:#e63946;font-weight:700">${mancanti} mancanti</span>`;
-    if(daComprare>0) meta+=` · <span style="color:#f77f00;font-weight:700">${daComprare} da comprare</span>`;
-    if(scarsi>0) meta+=` · <span style="color:#f59e0b;font-weight:700">${scarsi} scarsi</span>`;
+    if(daComprare>0) meta+=` · <span style="color:#f77f00;font-weight:800">${daComprare} da comprare</span>`;
+    const daGestireLuogo=mancanti+scarsi;
+    if(daGestireLuogo>0) meta+=` · <span style="color:#e63946;font-weight:400">${daGestireLuogo} da gestire</span>`;
 
     let ch=`<div class="group-card"><div class="group-header" data-toggleluogo="${luogo.id}">
       <span class="group-icon">${luogo.icona||'📦'}</span>
@@ -1101,7 +1114,7 @@ function renderImpostazioni(app){
   }
   // Info & Versione
   html+=`<div class="settings-card"><div class="settings-card-header"><h3>ℹ️ Info</h3></div>
-    <div class="settings-item"><span class="settings-item-icon">🏷️</span><div class="settings-item-info"><div class="settings-item-label">Versione</div><div class="settings-item-value" style="font-weight:800;color:var(--green-mid);font-size:15px">v7.3</div></div></div>
+    <div class="settings-item"><span class="settings-item-icon">🏷️</span><div class="settings-item-info"><div class="settings-item-label">Versione</div><div class="settings-item-value" style="font-weight:800;color:var(--green-mid);font-size:15px">v7.5</div></div></div>
     <div class="settings-item"><span class="settings-item-icon">☁️</span><div class="settings-item-info"><div class="settings-item-label">Sincronizzazione</div><div class="settings-item-value">Firebase Firestore · tempo reale</div></div></div>
     <div class="settings-item"><span class="settings-item-icon">📅</span><div class="settings-item-info"><div class="settings-item-label">Dispensa creata il</div><div class="settings-item-value">${dispensaData?.creatoIl?new Date(dispensaData.creatoIl).toLocaleDateString('it-IT'):'—'}</div></div></div>
   </div>`;
@@ -1720,7 +1733,7 @@ function attachProdottoCardEvents(){
 try{screen.orientation.unlock();}catch(e){}
 if('serviceWorker' in navigator){
   // Versione app — cambia questo numero ad ogni deploy per forzare aggiornamento
-  const APP_VERSION = '7.3';
+  const APP_VERSION = '7.5';
   navigator.serviceWorker.register('sw.js?v='+APP_VERSION).then(reg=>{
     reg.update();
     reg.addEventListener('updatefound',()=>{
