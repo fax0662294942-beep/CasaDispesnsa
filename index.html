@@ -645,7 +645,17 @@ function addToLista(prod,subcatId,negozioId,prezzoUnitario,qty){
     prezzoUnitario:prezzoUnitario||null,
     subcatNome:subcat?.nome||'',subcatIcon:subcat?.icona||'',acquistato:false,
   });
-  prod.daComprare=true;
+  // Aggiorna daComprare sull'oggetto ORIGINALE in dispensaData (non sulla copia)
+  if(subcatId && dispensaData.prodotti?.[subcatId]) {
+    const original = dispensaData.prodotti[subcatId].find(x=>x.id===prod.id);
+    if(original) original.daComprare=true;
+  } else {
+    // fallback: cerca in tutte le sottocategorie
+    for(const k in (dispensaData.prodotti||{})) {
+      const original = dispensaData.prodotti[k].find(x=>x.id===prod.id);
+      if(original) { original.daComprare=true; break; }
+    }
+  }
   scheduleFirestoreSave();render();
 }
 
@@ -875,7 +885,7 @@ function renderHome(app){
   app.insertAdjacentHTML('beforeend',`
     <div class="app-header">
       <div class="header-main">
-        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.6</span></h1></div>
+        <div class="header-title"><span class="icon">🏠</span><h1>Dispensa Casa<span>${currentUser?.displayName||currentUser?.email||''} · v7.7</span></h1></div>
         <div class="header-actions">
           <span id="syncDot" class="sync-dot sync-ok"></span>
           <button class="btn-icon" id="btnAutoAdd">⚡</button>
@@ -1114,7 +1124,7 @@ function renderImpostazioni(app){
   }
   // Info & Versione
   html+=`<div class="settings-card"><div class="settings-card-header"><h3>ℹ️ Info</h3></div>
-    <div class="settings-item"><span class="settings-item-icon">🏷️</span><div class="settings-item-info"><div class="settings-item-label">Versione</div><div class="settings-item-value" style="font-weight:800;color:var(--green-mid);font-size:15px">v7.6</div></div></div>
+    <div class="settings-item"><span class="settings-item-icon">🏷️</span><div class="settings-item-info"><div class="settings-item-label">Versione</div><div class="settings-item-value" style="font-weight:800;color:var(--green-mid);font-size:15px">v7.7</div></div></div>
     <div class="settings-item"><span class="settings-item-icon">☁️</span><div class="settings-item-info"><div class="settings-item-label">Sincronizzazione</div><div class="settings-item-value">Firebase Firestore · tempo reale</div></div></div>
     <div class="settings-item"><span class="settings-item-icon">📅</span><div class="settings-item-info"><div class="settings-item-label">Dispensa creata il</div><div class="settings-item-value">${dispensaData?.creatoIl?new Date(dispensaData.creatoIl).toLocaleDateString('it-IT'):'—'}</div></div></div>
   </div>`;
@@ -1733,7 +1743,7 @@ function attachProdottoCardEvents(){
 try{screen.orientation.unlock();}catch(e){}
 if('serviceWorker' in navigator){
   // Versione app — cambia questo numero ad ogni deploy per forzare aggiornamento
-  const APP_VERSION = '7.6';
+  const APP_VERSION = '7.7';
   navigator.serviceWorker.register('sw.js?v='+APP_VERSION).then(reg=>{
     reg.update();
     reg.addEventListener('updatefound',()=>{
